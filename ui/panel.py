@@ -16,3 +16,18 @@ class QUILA_PT_main_panel(bpy.types.Panel):
 
         layout.label(text="Quila Pipeline Checker")
         layout.prop(props, "student_name")
+
+        layout.separator()
+        layout.operator("quila.check_all", icon="CHECKMARK")
+
+        layout.separator()
+
+        if not props.has_been_checked:
+            layout.label(text="Belum ada hasil check.", icon="INFO")
+        elif props.is_valid:
+            layout.label(text="Semua pengecekan lolos.", icon="CHECKMARK")
+        else:
+            box = layout.box()
+            box.label(text=f"Ditemukan {len(props.validation_results)} masalah:", icon="ERROR")
+            for item in props.validation_results:
+                box.label(text=f"[{item.category}] {item.message}")

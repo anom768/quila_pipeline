@@ -25,6 +25,12 @@ class QuilaSceneProperties(bpy.types.PropertyGroup):
         default=False,
     )
 
+    has_been_checked: bpy.props.BoolProperty(
+        name="Has Been Checked",
+        description="True kalau tombol Check sudah pernah dijalankan minimal sekali",
+        default=False,
+    )
+
     validation_results: bpy.props.CollectionProperty(
         type=QuilaIssueItem,
         name="Validation Results",
