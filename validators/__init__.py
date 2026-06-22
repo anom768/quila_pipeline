@@ -11,12 +11,14 @@ class Issue:
 from . import file_naming
 from . import folder_structure
 from . import collection_naming
+from . import object_naming
 
 
 VALIDATORS = (
     file_naming,
     folder_structure,
-    collection_naming
+    collection_naming,
+    object_naming
 )
 
 
