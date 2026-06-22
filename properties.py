@@ -1,4 +1,5 @@
 import bpy
+from .csv_loader import get_student_enum_items
 
 
 class QuilaIssueItem(bpy.types.PropertyGroup):
@@ -12,10 +13,10 @@ class QuilaIssueItem(bpy.types.PropertyGroup):
 class QuilaSceneProperties(bpy.types.PropertyGroup):
     """Data yang tersimpan per-file (.blend), nempel di Scene"""
 
-    student_name: bpy.props.StringProperty(
+    student_name: bpy.props.EnumProperty(
         name="Student",
-        description="Nama student yang sedang mengerjakan file ini",
-        default="",
+        description="Pilih nama student yang sedang mengerjakan file ini",
+        items=get_student_enum_items,
     )
 
     is_valid: bpy.props.BoolProperty(
