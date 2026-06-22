@@ -12,6 +12,7 @@ import bpy
 from .properties import QuilaIssueItem, QuilaSceneProperties
 from .preferences import QuilaAddonPreferences
 from .operators.op_check import QUILA_OT_check_all
+from .operators.op_mark_final import QUILA_OT_mark_as_final
 from .ui.panel import QUILA_PT_main_panel
 
 classes = (
@@ -19,6 +20,7 @@ classes = (
     QuilaSceneProperties,
     QuilaAddonPreferences,
     QUILA_OT_check_all,
+    QUILA_OT_mark_as_final,
     QUILA_PT_main_panel,
 )
 

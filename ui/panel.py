@@ -31,3 +31,6 @@ class QUILA_PT_main_panel(bpy.types.Panel):
             box.label(text=f"Ditemukan {len(props.validation_results)} masalah:", icon="ERROR")
             for item in props.validation_results:
                 box.label(text=f"[{item.category}] {item.message}")
+
+        layout.separator()
+        layout.operator("quila.mark_as_final", icon="FILE_TICK")
