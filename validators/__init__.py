@@ -14,6 +14,7 @@ from . import collection_naming
 from . import object_naming
 from . import mesh_rules
 from . import material_naming
+from . import texture_naming
 
 
 VALIDATORS = (
@@ -22,7 +23,8 @@ VALIDATORS = (
     collection_naming,
     object_naming,
     mesh_rules,
-    material_naming
+    material_naming,
+    texture_naming
 )
 
 
