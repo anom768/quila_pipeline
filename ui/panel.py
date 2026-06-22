@@ -1,5 +1,6 @@
 import bpy
 
+
 class QUILA_PT_main_panel(bpy.types.Panel):
     """Panel utama Quila Pipeline di N-Panel viewport"""
 
@@ -11,5 +12,7 @@ class QUILA_PT_main_panel(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
+        props = context.scene.quila_props
+
         layout.label(text="Quila Pipeline Checker")
-        layout.label(text="(belum ada fitur, baru tampilan)")
+        layout.prop(props, "student_name")
