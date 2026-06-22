@@ -9,10 +9,12 @@ class Issue:
 
 
 from . import file_naming
+from . import folder_structure
 
 
 VALIDATORS = (
     file_naming,
+    folder_structure
 )
 
 
