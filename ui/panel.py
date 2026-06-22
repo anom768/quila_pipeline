@@ -1,4 +1,6 @@
 import bpy
+from collections import defaultdict
+from .helpers import get_wrap_width_chars, draw_wrapped_text
 
 
 class QUILA_PT_main_panel(bpy.types.Panel):
@@ -27,10 +29,23 @@ class QUILA_PT_main_panel(bpy.types.Panel):
         elif props.is_valid:
             layout.label(text="Semua pengecekan lolos.", icon="CHECKMARK")
         else:
-            box = layout.box()
-            box.label(text=f"Ditemukan {len(props.validation_results)} masalah:", icon="ERROR")
+            wrap_width = get_wrap_width_chars(context)
+            grouped = defaultdict(list)
             for item in props.validation_results:
-                box.label(text=f"[{item.category}] {item.message}")
+                grouped[item.category].append(item)
+
+            for category, items in grouped.items():
+                box = layout.box()
+                box.label(text=f"{category} ({len(items)})", icon="ERROR")
+                for item in items:
+                    row = box.row()
+                    col = row.column()
+                    draw_wrapped_text(col, item.message, wrap_width)
+                    if item.target_name:
+                        op = row.operator(
+                            "quila.select_target", text="", icon="RESTRICT_SELECT_OFF"
+                        )
+                        op.target_name = item.target_name
 
         layout.separator()
         layout.operator("quila.mark_as_final", icon="FILE_TICK")
