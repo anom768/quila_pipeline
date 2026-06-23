@@ -29,7 +29,7 @@ class QUILA_PT_main_panel(bpy.types.Panel):
             info_box.label(text="Object: (pilih Tugas & Artist dulu)", icon="OBJECT_DATA")
 
         layout.separator()
-        layout.operator("quila.check_all", icon="CHECKMARK")
+        layout.operator("quila.publish", icon="EXPORT")
 
         layout.separator()
 
@@ -55,6 +55,3 @@ class QUILA_PT_main_panel(bpy.types.Panel):
                             "quila.select_target", text="", icon="RESTRICT_SELECT_OFF"
                         )
                         op.target_name = item.target_name
-
-        layout.separator()
-        layout.operator("quila.mark_as_final", icon="FILE_TICK")
