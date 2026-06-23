@@ -27,7 +27,6 @@ def validate(context):
             return issues
         object_folder = os.path.dirname(current_folder)
     else:
-        # Mode final: file seharusnya berada langsung di folder utama object
         object_folder = current_folder
 
     if not os.path.isdir(object_folder):
@@ -37,13 +36,25 @@ def validate(context):
         ))
         return issues
 
-    existing_entries = set(os.listdir(object_folder))
+    existing_entries_lower = {}
+    for entry in os.listdir(object_folder):
+        existing_entries_lower.setdefault(entry.lower(), entry)
 
     for folder in REQUIRED_FOLDERS:
-        if folder not in existing_entries:
+        actual_entry = existing_entries_lower.get(folder.lower())
+
+        if actual_entry is None:
             issues.append(Issue(
                 category="Folder Structure",
                 message=f"Folder wajib '{folder}' tidak ditemukan di '{object_folder}'.",
+            ))
+        elif actual_entry != folder:
+            issues.append(Issue(
+                category="Folder Structure",
+                message=(
+                    f"Nama folder '{actual_entry}' tidak boleh huruf kecil, "
+                    f"seharusnya '{folder}' (huruf besar semua)."
+                ),
             ))
 
     return issues

@@ -1,6 +1,6 @@
 import os
 import bpy
-from ..sop_rules import RENDER_NAME_PATTERN, get_file_mode
+from ..sop_rules import RENDER_NAME_PATTERN, get_file_mode, get_expected_object_name
 from . import Issue
 
 
@@ -22,8 +22,9 @@ def validate(context):
     render_folder = os.path.join(object_folder, "RENDER")
 
     if not os.path.isdir(render_folder):
-        # Sudah ditangani validator folder structure
         return issues
+
+    expected_object_name = get_expected_object_name(filepath)
 
     for entry in os.listdir(render_folder):
         full_path = os.path.join(render_folder, entry)
@@ -38,6 +39,17 @@ def validate(context):
                 message=(
                     f"File render '{entry}' tidak sesuai format "
                     f"'[object_name]_(variantxx)_[prevxx]'."
+                ),
+                target_name=entry,
+            ))
+            continue
+
+        if expected_object_name and not name_without_ext.startswith(expected_object_name):
+            issues.append(Issue(
+                category="Render Naming",
+                message=(
+                    f"File render '{entry}' namanya tidak sesuai dengan object_name "
+                    f"yang aktif (seharusnya diawali '{expected_object_name}')."
                 ),
                 target_name=entry,
             ))
