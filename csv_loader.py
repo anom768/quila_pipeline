@@ -5,77 +5,8 @@ import re
 
 
 TASK_CSV_PATTERN = re.compile(r"^csv_tugas(\d+)\.csv$", re.IGNORECASE)
+_tugas_enum_cache = []
 
-
-def get_addon_preferences(context):
-    """Ambil AddonPreferences milik addon ini, untuk akses csv_path"""
-    return context.preferences.addons[__package__].preferences
-
-
-def load_csv_data(context):
-    """Baca file CSV dari path di Addon Preferences.
-    Return list of dict (satu dict per baris). Kosong kalau file tidak ada/error."""
-    prefs = get_addon_preferences(context)
-    path = prefs.csv_path
-
-    if not path or not os.path.isfile(path):
-        return []
-
-    rows = []
-    try:
-        # encoding "utf-8-sig" dipakai karena file CSV hasil export dari
-        # Excel/Google Sheets di Windows sering menyisipkan karakter BOM
-        # tersembunyi di awal file, yang bisa membuat header kolom pertama
-        # terbaca salah kalau pakai encoding "utf-8" biasa.
-        with open(path, newline="", encoding="utf-8-sig") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                rows.append(row)
-    except Exception as e:
-        print(f"Quila Pipeline: gagal membaca CSV - {e}")
-        return []
-
-    return rows
-
-
-def get_student_names(context):
-    """Return daftar nama student unik dari CSV, terurut alfabet"""
-    rows = load_csv_data(context)
-    names = sorted({
-        row["student_name"].strip()
-        for row in rows
-        if row.get("student_name")
-    })
-    return names
-
-
-def get_tasks_for_student(context, student_name):
-    """Return daftar object_name yang ditugaskan ke student tertentu"""
-    rows = load_csv_data(context)
-    return [
-        row["object_name"].strip()
-        for row in rows
-        if row.get("student_name", "").strip() == student_name
-    ]
-
-
-_student_enum_cache = []
-
-
-def get_student_enum_items(self, context):
-    """Callback untuk EnumProperty: generate pilihan dropdown dari CSV.
-    Hasilnya disimpan di variable global supaya tidak hilang dari memori
-    (lihat catatan gotcha di bagian Konsep)."""
-    global _student_enum_cache
-
-    names = get_student_names(context)
-
-    if not names:
-        _student_enum_cache = [("NONE", "(CSV belum diset / kosong)", "")]
-    else:
-        _student_enum_cache = [(name, name, "") for name in names]
-
-    return _student_enum_cache
 
 def get_csv_folder():
     """Path folder csv/ yang berada di dalam folder addon ini sendiri."""
@@ -142,3 +73,74 @@ def get_object_name_for_artist(filepath, artist_name):
             if object_name:
                 return object_name
     return None
+
+def get_tugas_enum_items(self, context):
+    """Callback EnumProperty: daftar pilihan dropdown Tugas, dari file csv_tugasN.csv yang ada."""
+    global _tugas_enum_cache
+
+    files = discover_task_csv_files()
+
+    if not files:
+        _tugas_enum_cache = [("NONE", "(Tidak ada file csv_tugasN.csv)", "")]
+    else:
+        _tugas_enum_cache = [
+            (str(number), f"Tugas {number}", "") for number, _ in files
+        ]
+
+    return _tugas_enum_cache
+
+
+_artist_enum_cache = []
+
+
+def get_artist_enum_items(self, context):
+    """Callback EnumProperty: daftar pilihan dropdown Artist,
+    tergantung dropdown Tugas (self.tugas_ke) yang sedang dipilih."""
+    global _artist_enum_cache
+
+    files = dict(discover_task_csv_files())
+
+    try:
+        selected_tugas = int(self.tugas_ke)
+    except (ValueError, TypeError):
+        selected_tugas = None
+
+    filepath = files.get(selected_tugas)
+
+    if not filepath:
+        _artist_enum_cache = [("NONE", "(Pilih Tugas dulu)", "")]
+        return _artist_enum_cache
+
+    names = get_artist_names(filepath)
+
+    if not names:
+        _artist_enum_cache = [("NONE", "(CSV kosong)", "")]
+    else:
+        _artist_enum_cache = [(name, name, "") for name in names]
+
+    return _artist_enum_cache
+
+
+def get_selected_csv_path(context):
+    """Return filepath csv_tugasN.csv sesuai dropdown Tugas yang sedang dipilih di Scene."""
+    props = context.scene.quila_props
+    files = dict(discover_task_csv_files())
+
+    try:
+        selected_tugas = int(props.tugas_ke)
+    except (ValueError, TypeError):
+        return None
+
+    return files.get(selected_tugas)
+
+
+def get_current_assigned_object_name(context):
+    """Return object_name yang ditugaskan ke kombinasi Tugas+Artist yang
+    sedang dipilih di Scene Properties. None kalau belum lengkap/tidak ketemu."""
+    props = context.scene.quila_props
+    filepath = get_selected_csv_path(context)
+
+    if not filepath:
+        return None
+
+    return get_object_name_for_artist(filepath, props.artist_name)

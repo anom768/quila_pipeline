@@ -1,7 +1,7 @@
 import os
 import bpy
 from ..sop_rules import FILE_NAME_PATTERN
-from ..csv_loader import get_tasks_for_student
+from ..csv_loader import get_current_assigned_object_name
 from . import Issue
 
 
@@ -30,19 +30,15 @@ def validate(context):
         return issues
 
     object_name = match.group("object_name")
+    expected_object_name = get_current_assigned_object_name(context)
 
-    props = context.scene.quila_props
-    student_name = props.student_name
-
-    if student_name and student_name != "NONE":
-        assigned_tasks = get_tasks_for_student(context, student_name)
-        if assigned_tasks and object_name not in assigned_tasks:
-            issues.append(Issue(
-                category="File Naming",
-                message=(
-                    f"object_name '{object_name}' tidak terdaftar sebagai tugas "
-                    f"untuk student '{student_name}'. Tugas terdaftar: {', '.join(assigned_tasks)}."
-                ),
-            ))
+    if expected_object_name and object_name != expected_object_name:
+        issues.append(Issue(
+            category="File Naming",
+            message=(
+                f"object_name '{object_name}' tidak sesuai dengan tugas yang dipilih "
+                f"(seharusnya '{expected_object_name}')."
+            ),
+        ))
 
     return issues

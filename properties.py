@@ -1,5 +1,5 @@
 import bpy
-from .csv_loader import get_student_enum_items
+from .csv_loader import get_tugas_enum_items, get_artist_enum_items
 
 
 class QuilaIssueItem(bpy.types.PropertyGroup):
@@ -13,21 +13,27 @@ class QuilaIssueItem(bpy.types.PropertyGroup):
 class QuilaSceneProperties(bpy.types.PropertyGroup):
     """Data yang tersimpan per-file (.blend), nempel di Scene"""
 
-    student_name: bpy.props.EnumProperty(
-        name="Student",
-        description="Pilih nama student yang sedang mengerjakan file ini",
-        items=get_student_enum_items,
+    tugas_ke: bpy.props.EnumProperty(
+        name="Tugas",
+        description="Pilih tugas ke berapa yang sedang dikerjakan",
+        items=get_tugas_enum_items,
+    )
+
+    artist_name: bpy.props.EnumProperty(
+        name="Artist",
+        description="Pilih nama artist yang sedang mengerjakan file ini",
+        items=get_artist_enum_items,
     )
 
     is_valid: bpy.props.BoolProperty(
         name="Is Valid",
-        description="True kalau hasil Check terakhir tidak ada error sama sekali",
+        description="True kalau hasil pengecekan terakhir tidak ada error sama sekali",
         default=False,
     )
 
     has_been_checked: bpy.props.BoolProperty(
         name="Has Been Checked",
-        description="True kalau tombol Check sudah pernah dijalankan minimal sekali",
+        description="True kalau pengecekan sudah pernah dijalankan minimal sekali",
         default=False,
     )
 

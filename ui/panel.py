@@ -1,6 +1,7 @@
 import bpy
 from collections import defaultdict
 from .helpers import get_wrap_width_chars, draw_wrapped_text
+from ..csv_loader import get_current_assigned_object_name
 
 
 class QUILA_PT_main_panel(bpy.types.Panel):
@@ -17,7 +18,15 @@ class QUILA_PT_main_panel(bpy.types.Panel):
         props = context.scene.quila_props
 
         layout.label(text="Quila Pipeline Checker")
-        layout.prop(props, "student_name")
+        layout.prop(props, "tugas_ke")
+        layout.prop(props, "artist_name")
+
+        object_name = get_current_assigned_object_name(context)
+        info_box = layout.box()
+        if object_name:
+            info_box.label(text=f"Object: {object_name}", icon="OBJECT_DATA")
+        else:
+            info_box.label(text="Object: (pilih Tugas & Artist dulu)", icon="OBJECT_DATA")
 
         layout.separator()
         layout.operator("quila.check_all", icon="CHECKMARK")
