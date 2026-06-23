@@ -1,6 +1,6 @@
 import os
 import bpy
-from ..sop_rules import FILE_NAME_PATTERN
+from ..sop_rules import get_file_mode, parse_filename_by_mode
 from ..csv_loader import get_current_assigned_object_name
 from . import Issue
 
@@ -17,15 +17,17 @@ def validate(context):
         return issues
 
     filename = os.path.basename(filepath)
-    match = FILE_NAME_PATTERN.match(filename)
+    mode = get_file_mode(filepath)
+    match = parse_filename_by_mode(filename, mode)
 
     if not match:
+        expected_format = (
+            "[object_name]_(variantxx)_[wipxx].blend" if mode == "wip"
+            else "[object_name]_(variantxx).blend"
+        )
         issues.append(Issue(
             category="File Naming",
-            message=(
-                f"Nama file '{filename}' tidak sesuai format "
-                f"'[object_name]_(variantxx)_[wipxx].blend'."
-            ),
+            message=f"Nama file '{filename}' tidak sesuai format '{expected_format}'.",
         ))
         return issues
 

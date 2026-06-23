@@ -42,15 +42,39 @@ RENDER_NAME_PATTERN = re.compile(
 LGT_CAM_COLLECTION_NAME = "lgt&cam"
 
 
+def get_file_mode(filepath):
+    """Return 'wip' atau 'final' (atau None kalau filepath kosong).
+    Ditentukan dari nama folder tempat file berada, bukan dari nama file —
+    supaya tidak ambigu dengan pattern nama file yang bisa cocok dua arah."""
+    if not filepath:
+        return None
+
+    parent_folder_name = os.path.basename(os.path.dirname(filepath))
+
+    if parent_folder_name == "WIP":
+        return "wip"
+
+    return "final"
+
+
+def parse_filename_by_mode(filename, mode):
+    """Cocokkan nama file ke pattern yang sesuai mode-nya.
+    Return match object, atau None kalau tidak cocok."""
+    if mode == "wip":
+        return FILE_NAME_PATTERN.match(filename)
+    return FINAL_FILE_NAME_PATTERN.match(filename)
+
+
 def get_expected_object_name(filepath):
-    """Ambil object_name (+ variant kalau ada) dari nama file WIP.
+    """Ambil object_name (+ variant kalau ada) dari nama file, WIP maupun Final.
     Dipakai untuk mencocokkan nama collection & render.
     Return None kalau filename tidak sesuai format."""
     if not filepath:
         return None
 
     filename = os.path.basename(filepath)
-    match = FILE_NAME_PATTERN.match(filename)
+    mode = get_file_mode(filepath)
+    match = parse_filename_by_mode(filename, mode)
 
     if not match:
         return None

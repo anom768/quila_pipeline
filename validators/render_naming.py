@@ -1,6 +1,6 @@
 import os
 import bpy
-from ..sop_rules import RENDER_NAME_PATTERN
+from ..sop_rules import RENDER_NAME_PATTERN, get_file_mode
 from . import Issue
 
 
@@ -11,12 +11,18 @@ def validate(context):
     if not filepath:
         return issues
 
-    wip_folder = os.path.dirname(filepath)
-    object_folder = os.path.dirname(wip_folder)
+    mode = get_file_mode(filepath)
+    current_folder = os.path.dirname(filepath)
+
+    if mode == "wip":
+        object_folder = os.path.dirname(current_folder)
+    else:
+        object_folder = current_folder
+
     render_folder = os.path.join(object_folder, "RENDER")
 
     if not os.path.isdir(render_folder):
-        # Sudah ditangani validator folder structure (v02)
+        # Sudah ditangani validator folder structure
         return issues
 
     for entry in os.listdir(render_folder):

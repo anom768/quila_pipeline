@@ -1,6 +1,6 @@
 import os
 import bpy
-from ..sop_rules import REQUIRED_FOLDERS
+from ..sop_rules import REQUIRED_FOLDERS, get_file_mode
 from . import Issue
 
 
@@ -11,20 +11,24 @@ def validate(context):
     if not filepath:
         return issues
 
-    wip_folder = os.path.dirname(filepath)
-    current_folder_name = os.path.basename(wip_folder)
+    mode = get_file_mode(filepath)
+    current_folder = os.path.dirname(filepath)
 
-    if current_folder_name != "WIP":
-        issues.append(Issue(
-            category="Folder Structure",
-            message=(
-                f"File WIP seharusnya berada tepat di dalam folder bernama 'WIP', "
-                f"bukan di '{current_folder_name}'."
-            ),
-        ))
-        return issues
-
-    object_folder = os.path.dirname(wip_folder)
+    if mode == "wip":
+        current_folder_name = os.path.basename(current_folder)
+        if current_folder_name != "WIP":
+            issues.append(Issue(
+                category="Folder Structure",
+                message=(
+                    f"File WIP seharusnya berada tepat di dalam folder bernama 'WIP', "
+                    f"bukan di '{current_folder_name}'."
+                ),
+            ))
+            return issues
+        object_folder = os.path.dirname(current_folder)
+    else:
+        # Mode final: file seharusnya berada langsung di folder utama object
+        object_folder = current_folder
 
     if not os.path.isdir(object_folder):
         issues.append(Issue(

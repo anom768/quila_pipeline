@@ -1,7 +1,7 @@
 import os
 import bpy
 from ..validators import run_all
-from ..sop_rules import FILE_NAME_PATTERN
+from ..sop_rules import FILE_NAME_PATTERN, get_file_mode
 
 
 class QUILA_OT_publish(bpy.types.Operator):
@@ -34,6 +34,16 @@ class QUILA_OT_publish(bpy.types.Operator):
 
     def _create_final_file(self, context):
         filepath = bpy.data.filepath
+        mode = get_file_mode(filepath)
+
+        if mode == "final":
+            self.report(
+                {'INFO'},
+                "Semua pengecekan lolos! File ini sudah berupa file final, "
+                "tidak ada file baru yang dibuat.",
+            )
+            return {'FINISHED'}
+
         filename = os.path.basename(filepath)
         match = FILE_NAME_PATTERN.match(filename)
 
