@@ -57,4 +57,17 @@ def validate(context):
                 ),
             ))
 
+    # BARU — Cek folder ekstra yang tidak diizinkan
+    allowed_lower = {f.lower() for f in REQUIRED_FOLDERS}
+    for entry in os.listdir(object_folder):
+        entry_path = os.path.join(object_folder, entry)
+        if os.path.isdir(entry_path) and entry.lower() not in allowed_lower:
+            issues.append(Issue(
+                category="Folder Structure",
+                message=(
+                    f"Folder '{entry}' tidak diizinkan di sini. "
+                    f"Hanya boleh ada: {', '.join(REQUIRED_FOLDERS)}."
+                ),
+            ))
+
     return issues
