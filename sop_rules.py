@@ -44,14 +44,15 @@ LGT_CAM_COLLECTION_NAME = "lgt&cam"
 
 def get_file_mode(filepath):
     """Return 'wip' atau 'final' (atau None kalau filepath kosong).
-    Ditentukan dari nama folder tempat file berada, bukan dari nama file —
-    supaya tidak ambigu dengan pattern nama file yang bisa cocok dua arah."""
+    Ditentukan dari suffix nama file: kalau ada _wipXX sebelum .blend → 'wip',
+    kalau tidak ada → 'final'. Lebih akurat dari folder-based karena folder
+    bisa salah (dan memang itu yang divalidasi oleh folder_structure.py)."""
     if not filepath:
         return None
 
-    parent_folder_name = os.path.basename(os.path.dirname(filepath))
-
-    if parent_folder_name == "WIP":
+    filename = os.path.basename(filepath)
+    # Cek apakah nama file mengandung _wipXX (dua digit angka) sebelum .blend
+    if re.search(r"_wip\d{2}\.blend$", filename, re.IGNORECASE):
         return "wip"
 
     return "final"
