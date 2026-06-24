@@ -75,7 +75,6 @@ def get_object_name_for_artist(filepath, artist_name):
     return None
 
 def get_tugas_enum_items(self, context):
-    """Callback EnumProperty: daftar pilihan dropdown Tugas, dari file csv_tugasN.csv yang ada."""
     global _tugas_enum_cache
 
     files = discover_task_csv_files()
@@ -83,7 +82,7 @@ def get_tugas_enum_items(self, context):
     if not files:
         _tugas_enum_cache = [("NONE", "(Tidak ada file csv_tugasN.csv)", "")]
     else:
-        _tugas_enum_cache = [
+        _tugas_enum_cache = [("NONE", "-- Pilih Tugas --", "")] + [
             (str(number), f"Tugas {number}", "") for number, _ in files
         ]
 
@@ -116,7 +115,9 @@ def get_artist_enum_items(self, context):
     if not names:
         _artist_enum_cache = [("NONE", "(CSV kosong)", "")]
     else:
-        _artist_enum_cache = [(name, name, "") for name in names]
+        _artist_enum_cache = [("NONE", "-- Pilih Artist --", "")] + [
+            (name, name, "") for name in names
+        ]
 
     return _artist_enum_cache
 
@@ -135,9 +136,16 @@ def get_selected_csv_path(context):
 
 
 def get_current_assigned_object_name(context):
-    """Return object_name yang ditugaskan ke kombinasi Tugas+Artist yang
-    sedang dipilih di Scene Properties. None kalau belum lengkap/tidak ketemu."""
     props = context.scene.quila_props
+
+    # Belum pilih Tugas
+    if props.tugas_ke == "NONE":
+        return None
+
+    # Belum pilih Artist
+    if props.artist_name == "NONE":
+        return None
+
     filepath = get_selected_csv_path(context)
 
     if not filepath:

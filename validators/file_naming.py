@@ -34,12 +34,17 @@ def validate(context):
     object_name = match.group("object_name")
     expected_object_name = get_current_assigned_object_name(context)
 
-    if expected_object_name and object_name != expected_object_name:
+    if expected_object_name is None:
+        issues.append(Issue(
+            category="File Naming",
+            message="Pilih Tugas dan Artist terlebih dahulu sebelum melakukan check.",
+        ))
+    elif object_name != expected_object_name:
         issues.append(Issue(
             category="File Naming",
             message=(
-                f"object_name '{object_name}' tidak sesuai dengan tugas yang dipilih "
-                f"(seharusnya '{expected_object_name}')."
+                f"Nama file tidak sesuai tugas: nama file mengandung '{object_name}', "
+                f"seharusnya '{expected_object_name}'."
             ),
         ))
 
