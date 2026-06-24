@@ -2,6 +2,7 @@ import os
 import bpy
 from ..validators import run_all
 from ..sop_rules import FILE_NAME_PATTERN, get_file_mode
+from ..csv_loader import is_csv_ready
 
 
 class QUILA_OT_publish(bpy.types.Operator):
@@ -10,6 +11,14 @@ class QUILA_OT_publish(bpy.types.Operator):
     bl_idname = "quila.publish"
     bl_label = "Publish"
     bl_description = "Jalankan semua pengecekan SOP, lalu buat file final kalau semua lolos"
+
+    @classmethod
+    def poll(cls, context):
+        """Tombol aktif hanya kalau ada CSV yang siap dipakai."""
+        try:
+            return is_csv_ready(context)
+        except Exception:
+            return False
 
     def execute(self, context):
         props = context.scene.quila_props

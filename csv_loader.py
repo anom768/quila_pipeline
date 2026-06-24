@@ -152,3 +152,18 @@ def get_current_assigned_object_name(context):
         return None
 
     return get_object_name_for_artist(filepath, props.artist_name)
+
+def is_csv_ready(context):
+    """Return True kalau ada minimal satu CSV tugas yang terbaca dan punya data.
+    Dipakai oleh poll() operator untuk enable/disable tombol."""
+    files = discover_task_csv_files()
+    if not files:
+        return False
+
+    # Cukup cek CSV pertama yang ditemukan — kalau ada satu yang valid, cukup
+    for _, filepath in files:
+        rows = load_task_csv(filepath)
+        if rows:
+            return True
+
+    return False

@@ -29,7 +29,15 @@ class QUILA_PT_main_panel(bpy.types.Panel):
             info_box.label(text="Object: (pilih Tugas & Artist dulu)", icon="OBJECT_DATA")
 
         layout.separator()
-        layout.operator("quila.publish", icon="EXPORT")
+        # Label tombol dinamis: "Publish" di mode WIP, "Check" di mode Final
+        filepath = bpy.data.filepath
+        from ..sop_rules import get_file_mode
+        mode = get_file_mode(filepath) if filepath else "wip"
+
+        if mode == "final":
+            layout.operator("quila.publish", text="Check SOP", icon="CHECKMARK")
+        else:
+            layout.operator("quila.publish", text="Publish", icon="EXPORT")
 
         layout.separator()
 
