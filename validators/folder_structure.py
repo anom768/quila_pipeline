@@ -57,7 +57,7 @@ def validate(context):
                 ),
             ))
 
-    # BARU — Cek folder ekstra yang tidak diizinkan
+    # Cek folder ekstra di level atas (object_folder)
     allowed_lower = {f.lower() for f in REQUIRED_FOLDERS}
     for entry in os.listdir(object_folder):
         entry_path = os.path.join(object_folder, entry)
@@ -69,5 +69,28 @@ def validate(context):
                     f"Hanya boleh ada: {', '.join(REQUIRED_FOLDERS)}."
                 ),
             ))
+
+    # BARU — Cek folder ekstra DI DALAM tiap subfolder wajib (REF/WIP/dst).
+    # Subfolder ini seharusnya flat, hanya berisi file, tidak ada folder
+    # bersarang lagi di dalamnya.
+    for folder in REQUIRED_FOLDERS:
+        actual_entry = existing_entries_lower.get(folder.lower())
+        if actual_entry is None:
+            continue  # sudah dilaporkan sebagai folder hilang di pengecekan atas
+
+        subfolder_path = os.path.join(object_folder, actual_entry)
+        if not os.path.isdir(subfolder_path):
+            continue
+
+        for inner_entry in os.listdir(subfolder_path):
+            inner_path = os.path.join(subfolder_path, inner_entry)
+            if os.path.isdir(inner_path):
+                issues.append(Issue(
+                    category="Folder Structure",
+                    message=(
+                        f"Folder '{inner_entry}' tidak boleh ada di dalam '{actual_entry}'. "
+                        f"Folder ini hanya boleh berisi file, bukan folder lain."
+                    ),
+                ))
 
     return issues
