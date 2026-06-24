@@ -14,9 +14,16 @@ class QUILA_OT_publish(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        """Tombol aktif hanya kalau ada CSV yang siap dipakai."""
+        """Tombol aktif hanya kalau CSV siap, DAN Tugas+Artist sudah dipilih."""
         try:
-            return is_csv_ready(context)
+            if not is_csv_ready(context):
+                return False
+
+            props = context.scene.quila_props
+            if props.tugas_ke == "NONE" or props.artist_name == "NONE":
+                return False
+
+            return True
         except Exception:
             return False
 

@@ -2,6 +2,7 @@ import bpy
 from collections import defaultdict
 from .helpers import get_wrap_width_chars, draw_wrapped_text
 from ..csv_loader import get_current_assigned_object_name
+from ..sop_rules import get_file_mode
 
 
 class QUILA_PT_main_panel(bpy.types.Panel):
@@ -17,9 +18,18 @@ class QUILA_PT_main_panel(bpy.types.Panel):
         layout = self.layout
         props = context.scene.quila_props
 
+        filepath = bpy.data.filepath
+        mode = get_file_mode(filepath) if filepath else "wip"
+
         layout.label(text="Quila Pipeline Checker")
-        layout.prop(props, "tugas_ke")
-        layout.prop(props, "artist_name")
+
+        dropdown_section = layout.column()
+        dropdown_section.enabled = (mode != "final")
+        dropdown_section.prop(props, "tugas_ke")
+        dropdown_section.prop(props, "artist_name")
+
+        if mode == "final":
+            layout.label(text="Tugas & Artist terkunci (file sudah final)", icon="LOCKED")
 
         object_name = get_current_assigned_object_name(context)
         info_box = layout.box()
@@ -29,10 +39,6 @@ class QUILA_PT_main_panel(bpy.types.Panel):
             info_box.label(text="Object: (pilih Tugas & Artist dulu)", icon="OBJECT_DATA")
 
         layout.separator()
-        # Label tombol dinamis: "Publish" di mode WIP, "Check" di mode Final
-        filepath = bpy.data.filepath
-        from ..sop_rules import get_file_mode
-        mode = get_file_mode(filepath) if filepath else "wip"
 
         if mode == "final":
             layout.operator("quila.publish", text="Check SOP", icon="CHECKMARK")
