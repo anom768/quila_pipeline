@@ -1,4 +1,5 @@
 import os
+import re
 import bpy
 from ..sop_rules import REQUIRED_FOLDERS, get_file_mode, get_expected_object_name
 from . import Issue
@@ -36,27 +37,42 @@ def validate(context):
         ))
         return issues
 
-    # BARU — Cek nama folder utama cocok dengan object_name yang seharusnya
+    # Cek nama folder utama: harus UPPERCASE dari object_name, hanya huruf/angka/underscore
     expected_object_name = get_expected_object_name(filepath)
     actual_root_name = os.path.basename(object_folder)
 
-    if expected_object_name and actual_root_name != expected_object_name:
-        if actual_root_name.upper() == expected_object_name.upper():
+    if expected_object_name:
+        expected_root_name = expected_object_name.upper()
+
+        # Cek karakter tidak valid (spasi, strip, dll) — cek ini duluan
+        if not re.match(r'^[A-Z0-9_]+$', actual_root_name):
             issues.append(Issue(
                 category="Folder Structure",
                 message=(
-                    f"Nama folder utama '{actual_root_name}' tidak boleh huruf besar semua, "
-                    f"seharusnya '{expected_object_name}'."
+                    f"Nama folder utama '{actual_root_name}' mengandung karakter tidak valid. "
+                    f"Hanya boleh huruf besar, angka, dan underscore (misal: '{expected_root_name}')."
                 ),
             ))
-        else:
-            issues.append(Issue(
-                category="Folder Structure",
-                message=(
-                    f"Nama folder utama '{actual_root_name}' tidak sesuai object_name "
-                    f"(seharusnya '{expected_object_name}')."
-                ),
-            ))
+        elif actual_root_name != expected_root_name:
+            # Nama valid tapi tidak cocok dengan yang seharusnya
+            if actual_root_name == expected_object_name:
+                # Kasusnya: nama benar tapi lowercase
+                issues.append(Issue(
+                    category="Folder Structure",
+                    message=(
+                        f"Nama folder utama '{actual_root_name}' harus UPPERCASE, "
+                        f"seharusnya '{expected_root_name}'."
+                    ),
+                ))
+            else:
+                # Nama berbeda sama sekali dari object_name
+                issues.append(Issue(
+                    category="Folder Structure",
+                    message=(
+                        f"Nama folder utama '{actual_root_name}' tidak sesuai tugas "
+                        f"(seharusnya '{expected_root_name}')."
+                    ),
+                ))
 
     existing_entries_lower = {}
     for entry in os.listdir(object_folder):

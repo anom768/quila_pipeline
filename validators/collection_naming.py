@@ -33,6 +33,21 @@ def validate(context):
 
     lgt_cam_collection = bpy.data.collections.get(LGT_CAM_COLLECTION_NAME)
 
+    # Cek posisi hierarki lgt&cam — tidak boleh nested di dalam collection object
+    object_collection = bpy.data.collections.get(expected_name)
+    if object_collection and lgt_cam_collection is not None:
+        child_names = [c.name for c in object_collection.children]
+        if LGT_CAM_COLLECTION_NAME in child_names:
+            issues.append(Issue(
+                category="Collection Naming",
+                message=(
+                    f"Collection '{LGT_CAM_COLLECTION_NAME}' tidak boleh berada di dalam "
+                    f"collection '{expected_name}'. "
+                    f"Pindahkan '{LGT_CAM_COLLECTION_NAME}' ke root scene, "
+                    f"sejajar dengan '{expected_name}'."
+                ),
+            ))
+
     for obj in bpy.data.objects:
         if obj.type not in {"LIGHT", "CAMERA"}:
             continue

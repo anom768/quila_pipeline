@@ -42,7 +42,7 @@ class QUILA_OT_create_project(bpy.types.Operator):
             self.report({'ERROR'}, f"Path dasar '{base_path}' tidak ditemukan/tidak bisa diakses.")
             return {'CANCELLED'}
 
-        object_folder = os.path.join(base_path, object_name)
+        object_folder = os.path.join(base_path, object_name.upper())
 
         try:
             os.makedirs(object_folder, exist_ok=True)

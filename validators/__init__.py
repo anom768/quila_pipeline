@@ -31,9 +31,12 @@ VALIDATORS = (
 
 
 def run_all(context):
-    """Jalankan semua validator berurutan, kumpulkan semua Issue jadi satu list."""
+    """Jalankan semua validator berurutan, ambil hanya 1 issue pertama per validator.
+    Tujuannya supaya student fokus memperbaiki satu masalah per kategori per klik,
+    tidak overwhelmed dengan semua error sekaligus."""
     all_issues = []
     for validator_module in VALIDATORS:
         issues = validator_module.validate(context)
-        all_issues.extend(issues)
+        if issues:
+            all_issues.append(issues[0])
     return all_issues

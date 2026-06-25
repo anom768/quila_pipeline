@@ -11,7 +11,6 @@ bl_info = {
 import bpy
 from .properties import QuilaIssueItem, QuilaSceneProperties
 from .operators.op_publish import QUILA_OT_publish
-from .operators.op_select_target import QUILA_OT_select_target
 from .operators.op_create_project import QUILA_OT_create_project
 from .ui.panel import QUILA_PT_main_panel
 
@@ -20,7 +19,6 @@ classes = (
     QuilaSceneProperties,
     QUILA_OT_publish,
     QUILA_OT_create_project,
-    QUILA_OT_select_target,
     QUILA_PT_main_panel,
 )
 

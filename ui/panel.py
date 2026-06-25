@@ -25,12 +25,14 @@ class QUILA_PT_main_panel(bpy.types.Panel):
         layout.label(text="Quila Pipeline Checker")
 
         dropdown_section = layout.column()
-        dropdown_section.enabled = (mode != "final")
+        dropdown_section.enabled = is_new_file
         dropdown_section.prop(props, "tugas_ke")
         dropdown_section.prop(props, "artist_name")
 
-        if mode == "final":
+        if not is_new_file and mode == "final":
             layout.label(text="Tugas & Artist terkunci (file sudah final)", icon="LOCKED")
+        elif not is_new_file:
+            layout.label(text="Tugas & Artist terkunci (file WIP sudah disimpan)", icon="LOCKED")
 
         object_name = get_current_assigned_object_name(context)
         info_box = layout.box()
@@ -67,8 +69,3 @@ class QUILA_PT_main_panel(bpy.types.Panel):
                     row = box.row()
                     col = row.column()
                     draw_wrapped_text(col, item.message, wrap_width, bullet=True)
-                    if item.target_name:
-                        op = row.operator(
-                            "quila.select_target", text="", icon="RESTRICT_SELECT_OFF"
-                        )
-                        op.target_name = item.target_name

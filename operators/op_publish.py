@@ -84,6 +84,19 @@ class QUILA_OT_publish(bpy.types.Operator):
 
         final_path = os.path.join(object_folder, final_filename)
 
+        # Simpan file WIP yang sedang aktif terlebih dahulu
+        bpy.ops.wm.save_mainfile()
+
+        # Buat salinan file final (copy=True: active file tetap menunjuk ke WIP)
+        bpy.ops.wm.save_as_mainfile(
+            filepath=final_path,
+            copy=True,
+            check_existing=False,
+        )
+
+        self.report({'INFO'}, f"Semua pengecekan lolos! File final disimpan: {final_filename}")
+        return {'FINISHED'}
+
         bpy.ops.wm.save_as_mainfile(
             filepath=final_path,
             copy=True,
