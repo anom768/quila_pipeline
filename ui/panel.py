@@ -19,7 +19,8 @@ class QUILA_PT_main_panel(bpy.types.Panel):
         props = context.scene.quila_props
 
         filepath = bpy.data.filepath
-        mode = get_file_mode(filepath) if filepath else "wip"
+        is_new_file = not filepath
+        mode = None if is_new_file else get_file_mode(filepath)
 
         layout.label(text="Quila Pipeline Checker")
 
@@ -40,7 +41,9 @@ class QUILA_PT_main_panel(bpy.types.Panel):
 
         layout.separator()
 
-        if mode == "final":
+        if is_new_file:
+            layout.operator("quila.create_project", icon="NEWFOLDER")
+        elif mode == "final":
             layout.operator("quila.publish", text="Check SOP", icon="CHECKMARK")
         else:
             layout.operator("quila.publish", text="Publish", icon="EXPORT")
