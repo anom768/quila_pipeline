@@ -1,6 +1,6 @@
 import os
 import bpy
-from ..sop_rules import REQUIRED_FOLDERS, get_file_mode
+from ..sop_rules import REQUIRED_FOLDERS, get_file_mode, get_expected_object_name
 from . import Issue
 
 
@@ -36,6 +36,28 @@ def validate(context):
         ))
         return issues
 
+    # BARU — Cek nama folder utama cocok dengan object_name yang seharusnya
+    expected_object_name = get_expected_object_name(filepath)
+    actual_root_name = os.path.basename(object_folder)
+
+    if expected_object_name and actual_root_name != expected_object_name:
+        if actual_root_name.upper() == expected_object_name.upper():
+            issues.append(Issue(
+                category="Folder Structure",
+                message=(
+                    f"Nama folder utama '{actual_root_name}' tidak boleh huruf besar semua, "
+                    f"seharusnya '{expected_object_name}'."
+                ),
+            ))
+        else:
+            issues.append(Issue(
+                category="Folder Structure",
+                message=(
+                    f"Nama folder utama '{actual_root_name}' tidak sesuai object_name "
+                    f"(seharusnya '{expected_object_name}')."
+                ),
+            ))
+
     existing_entries_lower = {}
     for entry in os.listdir(object_folder):
         existing_entries_lower.setdefault(entry.lower(), entry)
@@ -57,7 +79,6 @@ def validate(context):
                 ),
             ))
 
-    # Cek folder ekstra di level atas (object_folder)
     allowed_lower = {f.lower() for f in REQUIRED_FOLDERS}
     for entry in os.listdir(object_folder):
         entry_path = os.path.join(object_folder, entry)
@@ -70,13 +91,10 @@ def validate(context):
                 ),
             ))
 
-    # BARU — Cek folder ekstra DI DALAM tiap subfolder wajib (REF/WIP/dst).
-    # Subfolder ini seharusnya flat, hanya berisi file, tidak ada folder
-    # bersarang lagi di dalamnya.
     for folder in REQUIRED_FOLDERS:
         actual_entry = existing_entries_lower.get(folder.lower())
         if actual_entry is None:
-            continue  # sudah dilaporkan sebagai folder hilang di pengecekan atas
+            continue
 
         subfolder_path = os.path.join(object_folder, actual_entry)
         if not os.path.isdir(subfolder_path):
