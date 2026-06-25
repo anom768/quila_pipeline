@@ -95,12 +95,3 @@ class QUILA_OT_publish(bpy.types.Operator):
 
         self.report({'INFO'}, f"Semua pengecekan lolos! File final disimpan: {final_filename}")
         return {'FINISHED'}
-
-        bpy.ops.wm.save_as_mainfile(
-            filepath=final_path,
-            copy=True,
-            check_existing=False,
-        )
-
-        self.report({'INFO'}, f"Semua pengecekan lolos! File final disimpan: {final_filename}")
-        return {'FINISHED'}
