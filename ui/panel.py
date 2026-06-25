@@ -66,7 +66,7 @@ class QUILA_PT_main_panel(bpy.types.Panel):
                 for item in items:
                     row = box.row()
                     col = row.column()
-                    draw_wrapped_text(col, item.message, wrap_width)
+                    draw_wrapped_text(col, item.message, wrap_width, bullet=True)
                     if item.target_name:
                         op = row.operator(
                             "quila.select_target", text="", icon="RESTRICT_SELECT_OFF"

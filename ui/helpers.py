@@ -8,7 +8,16 @@ def get_wrap_width_chars(context):
     return chars
 
 
-def draw_wrapped_text(layout, text, width_chars):
-    """Tampilkan teks panjang sebagai beberapa baris label (manual word-wrap)."""
-    for line in textwrap.wrap(text, width_chars):
-        layout.label(text=line)
+def draw_wrapped_text(layout, text, width_chars, bullet=False):
+    """Tampilkan teks panjang sebagai beberapa baris label (manual word-wrap).
+
+    Kalau bullet=True, baris pertama diberi tanda '•' di depan — berguna
+    untuk memperjelas batas antar masalah ketika satu kategori error
+    punya lebih dari satu masalah sekaligus."""
+    lines = textwrap.wrap(text, width_chars)
+
+    for i, line in enumerate(lines):
+        if bullet and i == 0:
+            layout.label(text=f"• {line}")
+        else:
+            layout.label(text=line)
