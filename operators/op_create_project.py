@@ -11,8 +11,7 @@ class QUILA_OT_create_project(bpy.types.Operator):
     bl_idname = "quila.create_project"
     bl_label = "Create Project"
     bl_description = (
-        "Buat struktur folder project otomatis berdasarkan Tugas yang dipilih, "
-        "lalu simpan file ini sebagai WIP pertama"
+        "buat proyek baru"
     )
 
     @classmethod
@@ -59,8 +58,7 @@ class QUILA_OT_create_project(bpy.types.Operator):
         if os.path.isfile(wip_filepath):
             self.report(
                 {'WARNING'},
-                f"File '{wip_filename}' sudah ada di folder WIP, tidak ditimpa. "
-                f"Buka file itu langsung kalau ingin lanjut kerja.",
+                f"File '{wip_filename}' sudah ada. "
             )
             return {'CANCELLED'}
 

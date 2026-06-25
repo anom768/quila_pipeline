@@ -10,7 +10,7 @@ class QUILA_OT_publish(bpy.types.Operator):
 
     bl_idname = "quila.publish"
     bl_label = "Publish"
-    bl_description = "Jalankan semua pengecekan SOP, lalu buat file final kalau semua lolos"
+    bl_description = "Jalankan semua pengecekan SOP"
 
     @classmethod
     def poll(cls, context):
@@ -55,8 +55,7 @@ class QUILA_OT_publish(bpy.types.Operator):
         if mode == "final":
             self.report(
                 {'INFO'},
-                "Semua pengecekan lolos! File ini sudah berupa file final, "
-                "tidak ada file baru yang dibuat.",
+                "Semua pengecekan lolos!"
             )
             return {'FINISHED'}
 
