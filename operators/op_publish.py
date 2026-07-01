@@ -37,6 +37,32 @@ class QUILA_OT_publish(bpy.types.Operator):
     def execute(self, context):
         props = context.scene.quila_props
 
+        # Purge unused data sebelum validasi
+        for _ in range(10):
+            purged = 0
+            for block in list(bpy.data.images):
+                if block.users == 0:
+                    bpy.data.images.remove(block)
+                    purged += 1
+            for block in list(bpy.data.materials):
+                if block.users == 0:
+                    bpy.data.materials.remove(block)
+                    purged += 1
+            for block in list(bpy.data.meshes):
+                if block.users == 0:
+                    bpy.data.meshes.remove(block)
+                    purged += 1
+            for block in list(bpy.data.textures):
+                if block.users == 0:
+                    bpy.data.textures.remove(block)
+                    purged += 1
+            for block in list(bpy.data.node_groups):
+                if block.users == 0:
+                    bpy.data.node_groups.remove(block)
+                    purged += 1
+            if purged == 0:
+                break
+
         issues = run_all(context)
 
         props.validation_results.clear()
@@ -51,6 +77,9 @@ class QUILA_OT_publish(bpy.types.Operator):
         props.has_been_checked = True
 
         if not props.is_valid:
+            # Ada error — save WIP tapi tidak buat final
+            if bpy.data.filepath:
+                bpy.ops.wm.save_mainfile()
             self.report({'ERROR'}, f"Ditemukan {len(issues)} masalah. Publish dibatalkan.")
             return {'FINISHED'}
 

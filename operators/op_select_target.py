@@ -33,8 +33,8 @@ class QUILA_OT_select_target(bpy.types.Operator):
             return self._open_file_in_explorer(target)
         elif action == "open_image_editor":
             return self._open_image_editor(context, target)
-        elif action == "open_shader_editor":
-            return self._open_shader_editor(context, target)
+        elif action == "open_material_properties":
+            return self._open_material_properties(context, target)
         else:
             self.report({'WARNING'}, f"Action type '{action}' tidak dikenal.")
             return {'CANCELLED'}
@@ -180,16 +180,16 @@ class QUILA_OT_select_target(bpy.types.Operator):
         return {'FINISHED'}
 
     # ------------------------------------------------------------------ #
-    # BUKA SHADER EDITOR DAN SET MATERIAL AKTIF
+    # BUKA MATERIAL PROPERTIES DAN SET MATERIAL AKTIF
     # ------------------------------------------------------------------ #
 
-    def _open_shader_editor(self, context, mat_name):
+    def _open_material_properties(self, context, mat_name):
         mat = bpy.data.materials.get(mat_name)
         if mat is None:
             self.report({'WARNING'}, f"Material '{mat_name}' tidak ditemukan.")
             return {'CANCELLED'}
 
-        # Cari object yang punya material ini, set sebagai active
+        # Cari object MESH yang punya material ini
         owner_obj = None
         for obj in bpy.data.objects:
             if obj.type == 'MESH':
@@ -200,36 +200,33 @@ class QUILA_OT_select_target(bpy.types.Operator):
             if owner_obj:
                 break
 
-        if owner_obj:
-            bpy.ops.object.select_all(action='DESELECT')
-            owner_obj.select_set(True)
-            context.view_layer.objects.active = owner_obj
-            # Set slot material yang sesuai sebagai aktif
-            for i, slot in enumerate(owner_obj.material_slots):
-                if slot.material and slot.material.name == mat_name:
-                    owner_obj.active_material_index = i
-                    break
+        if owner_obj is None:
+            self.report({'WARNING'}, f"Tidak ada object yang memakai material '{mat_name}'.")
+            return {'CANCELLED'}
 
-        # Cari area Shader Editor, atau ubah area yang ada
-        target_area = None
-        for area in context.screen.areas:
-            if area.type == 'NODE_EDITOR':
-                space = area.spaces.active
-                if hasattr(space, 'shader_type'):
-                    target_area = area
-                    break
+        # Select dan aktifkan object MESH pemilik material dulu
+        # — wajib dilakukan sebelum set Properties context ke MATERIAL,
+        # karena tab Material hanya tersedia kalau active object adalah MESH
+        bpy.ops.object.select_all(action='DESELECT')
+        owner_obj.select_set(True)
+        context.view_layer.objects.active = owner_obj
 
-        if target_area is None:
+        # Set slot material yang sesuai sebagai aktif
+        for i, slot in enumerate(owner_obj.material_slots):
+            if slot.material and slot.material.name == mat_name:
+                owner_obj.active_material_index = i
+                break
+
+        # Baru setelah active object adalah MESH, set Properties tab ke Material
+        # Pakai timer 0.1s supaya Blender sempat update active object dulu
+        def _set_material_context():
             for area in context.screen.areas:
-                if area.type not in {'VIEW_3D', 'PROPERTIES', 'OUTLINER'}:
-                    target_area = area
+                if area.type == 'PROPERTIES':
+                    area.spaces.active.context = 'MATERIAL'
                     break
+            return None  # None = tidak repeat
 
-        if target_area:
-            target_area.type = 'NODE_EDITOR'
-            space = target_area.spaces.active
-            space.tree_type = 'ShaderNodeTree'
-            space.shader_type = 'OBJECT'
+        bpy.app.timers.register(_set_material_context, first_interval=0.1)
 
-        self.report({'INFO'}, f"Material '{mat_name}' dibuka di Shader Editor.")
+        self.report({'INFO'}, f"Material '{mat_name}' ditampilkan di Material Properties.")
         return {'FINISHED'}

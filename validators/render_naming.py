@@ -40,7 +40,7 @@ def validate(context):
                     f"File render '{entry}' tidak sesuai format "
                     f"'[object_name]_(variantxx)_[prevxx]'."
                 ),
-                target_name=entry,
+                target_name=render_folder,
                 action_type="open_render_folder"
             ))
             continue
@@ -52,7 +52,7 @@ def validate(context):
                     f"File render '{entry}' namanya tidak sesuai dengan object_name "
                     f"yang aktif (seharusnya diawali '{expected_object_name}')."
                 ),
-                target_name=entry,
+                target_name=render_folder,
                 action_type="open_render_folder"
             ))
 

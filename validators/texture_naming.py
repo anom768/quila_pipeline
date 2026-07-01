@@ -96,7 +96,7 @@ def validate(context):
                         f"File texture '{filename}' tidak ditemukan di disk "
                         f"(path: '{abs_path}'). File mungkin sudah dipindah atau di-rename."
                     ),
-                    target_name=img.name,
+                    target_name=abs_path,
                     action_type="open_texture_file",
                 ))
                 continue
@@ -112,7 +112,7 @@ def validate(context):
                             f"project ini ('{expected_texture_folder}'). "
                             f"Pindahkan file ke folder TEXTURE yang benar."
                         ),
-                        target_name=img.name,
+                        target_name=abs_path,
                         action_type="open_texture_file",
                     ))
 
@@ -123,7 +123,7 @@ def validate(context):
                         f"Nama file texture '{filename}' tidak sesuai format "
                         f"'tex_texture_name_type'."
                     ),
-                    target_name=img.name,
+                    target_name=abs_path,
                     action_type="open_texture_file",
                 ))
 

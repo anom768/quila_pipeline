@@ -12,7 +12,7 @@ def validate(context):
                 category="Material Naming",
                 message=f"Nama material '{mat.name}' tidak sesuai format 'shd_shader_name'.",
                 target_name=mat.name,
-                action_type="open_shader_editor",
+                action_type="open_material_properties",
             ))
 
     return issues

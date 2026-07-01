@@ -25,19 +25,19 @@ def validate(context):
                     f"bukan di '{current_folder_name}'."
                 ),
                 action_type="open_folder",
+                target_name=current_folder,
             ))
             return issues
         object_folder = os.path.dirname(current_folder)
     else:
         object_folder = current_folder
-    
-    root_path = object_folder
 
     if not os.path.isdir(object_folder):
         issues.append(Issue(
             category="Folder Structure",
             message=f"Folder utama object '{object_folder}' tidak ditemukan.",
             action_type="open_folder",
+            target_name=os.path.dirname(object_folder),
         ))
         return issues
 
@@ -48,7 +48,6 @@ def validate(context):
     if expected_object_name:
         expected_root_name = expected_object_name.upper()
 
-        # Cek karakter tidak valid (spasi, strip, dll) — cek ini duluan
         if not re.match(r'^[A-Z0-9_]+$', actual_root_name):
             issues.append(Issue(
                 category="Folder Structure",
@@ -57,11 +56,10 @@ def validate(context):
                     f"Hanya boleh huruf besar, angka, dan underscore (misal: '{expected_root_name}')."
                 ),
                 action_type="open_folder",
+                target_name=object_folder,
             ))
         elif actual_root_name != expected_root_name:
-            # Nama valid tapi tidak cocok dengan yang seharusnya
             if actual_root_name == expected_object_name:
-                # Kasusnya: nama benar tapi lowercase
                 issues.append(Issue(
                     category="Folder Structure",
                     message=(
@@ -69,9 +67,9 @@ def validate(context):
                         f"seharusnya '{expected_root_name}'."
                     ),
                     action_type="open_folder",
+                    target_name=object_folder,
                 ))
             else:
-                # Nama berbeda sama sekali dari object_name
                 issues.append(Issue(
                     category="Folder Structure",
                     message=(
@@ -79,6 +77,7 @@ def validate(context):
                         f"(seharusnya '{expected_root_name}')."
                     ),
                     action_type="open_folder",
+                    target_name=object_folder,
                 ))
 
     existing_entries_lower = {}
@@ -93,6 +92,7 @@ def validate(context):
                 category="Folder Structure",
                 message=f"Folder wajib '{folder}' tidak ditemukan di '{object_folder}'.",
                 action_type="open_folder",
+                target_name=object_folder,
             ))
         elif actual_entry != folder:
             issues.append(Issue(
@@ -102,6 +102,7 @@ def validate(context):
                     f"seharusnya '{folder}' (huruf besar semua)."
                 ),
                 action_type="open_folder",
+                target_name=object_folder,
             ))
 
     allowed_lower = {f.lower() for f in REQUIRED_FOLDERS}
@@ -115,6 +116,7 @@ def validate(context):
                     f"Hanya boleh ada: {', '.join(REQUIRED_FOLDERS)}."
                 ),
                 action_type="open_folder",
+                target_name=object_folder,
             ))
 
     for folder in REQUIRED_FOLDERS:
@@ -136,6 +138,7 @@ def validate(context):
                         f"Folder ini hanya boleh berisi file, bukan folder lain."
                     ),
                     action_type="open_folder",
+                    target_name=subfolder_path,
                 ))
 
     return issues

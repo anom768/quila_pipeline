@@ -83,7 +83,7 @@ class QUILA_PT_main_panel(bpy.types.Panel):
                     col.scale_x = 1.0
                     draw_wrapped_text(col, item.message, wrap_width, bullet=True)
 
-                    if item.action_type and item.target_name:
+                    if item.action_type:
                         btn = row.operator(
                             "quila.select_target",
                             text="",
