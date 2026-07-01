@@ -10,12 +10,19 @@ class QUILA_OT_publish(bpy.types.Operator):
 
     bl_idname = "quila.publish"
     bl_label = "Publish"
-    bl_description = "Jalankan semua pengecekan SOP"
+    bl_description = "Jalankan semua pengecekan SOP (hanya bisa dijalankan di Object Mode)"
 
     @classmethod
     def poll(cls, context):
-        """Tombol aktif hanya kalau CSV siap, DAN Tugas+Artist sudah dipilih."""
+        """Tombol aktif hanya kalau:
+        - Sedang di Object Mode (bukan Edit Mode atau mode lain)
+        - CSV siap
+        - Tugas + Artist sudah dipilih
+        """
         try:
+            if context.mode != 'OBJECT':
+                return False
+
             if not is_csv_ready(context):
                 return False
 
