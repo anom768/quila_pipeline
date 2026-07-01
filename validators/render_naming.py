@@ -41,6 +41,7 @@ def validate(context):
                     f"'[object_name]_(variantxx)_[prevxx]'."
                 ),
                 target_name=entry,
+                action_type="open_render_folder"
             ))
             continue
 
@@ -52,6 +53,7 @@ def validate(context):
                     f"yang aktif (seharusnya diawali '{expected_object_name}')."
                 ),
                 target_name=entry,
+                action_type="open_render_folder"
             ))
 
     return issues

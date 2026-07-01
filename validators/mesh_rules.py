@@ -41,6 +41,7 @@ def validate(context):
                 category="Mesh Rules",
                 message=f"Object '{obj.name}' memiliki n-gon (face dengan lebih dari 4 sisi).",
                 target_name=obj.name,
+                action_type="select_object",
             ))
 
         if _signed_volume(bm) < 0:
@@ -48,6 +49,7 @@ def validate(context):
                 category="Mesh Rules",
                 message=f"Object '{obj.name}' terdeteksi memiliki normal yang terbalik (flipped).",
                 target_name=obj.name,
+                action_type="select_object",
             ))
 
         bm.free()

@@ -6,6 +6,7 @@ class Issue:
     category: str
     message: str
     target_name: str = ""
+    action_type: str = ""
 
 
 from . import file_naming

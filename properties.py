@@ -8,6 +8,7 @@ class QuilaIssueItem(bpy.types.PropertyGroup):
     category: bpy.props.StringProperty(name="Category")
     message: bpy.props.StringProperty(name="Message")
     target_name: bpy.props.StringProperty(name="Target Name")
+    action_type: bpy.props.StringProperty(name="Action Type")
 
 
 class QuilaSceneProperties(bpy.types.PropertyGroup):

@@ -24,16 +24,20 @@ def validate(context):
                     f"File WIP seharusnya berada tepat di dalam folder bernama 'WIP', "
                     f"bukan di '{current_folder_name}'."
                 ),
+                action_type="open_folder",
             ))
             return issues
         object_folder = os.path.dirname(current_folder)
     else:
         object_folder = current_folder
+    
+    root_path = object_folder
 
     if not os.path.isdir(object_folder):
         issues.append(Issue(
             category="Folder Structure",
             message=f"Folder utama object '{object_folder}' tidak ditemukan.",
+            action_type="open_folder",
         ))
         return issues
 
@@ -52,6 +56,7 @@ def validate(context):
                     f"Nama folder utama '{actual_root_name}' mengandung karakter tidak valid. "
                     f"Hanya boleh huruf besar, angka, dan underscore (misal: '{expected_root_name}')."
                 ),
+                action_type="open_folder",
             ))
         elif actual_root_name != expected_root_name:
             # Nama valid tapi tidak cocok dengan yang seharusnya
@@ -63,6 +68,7 @@ def validate(context):
                         f"Nama folder utama '{actual_root_name}' harus UPPERCASE, "
                         f"seharusnya '{expected_root_name}'."
                     ),
+                    action_type="open_folder",
                 ))
             else:
                 # Nama berbeda sama sekali dari object_name
@@ -72,6 +78,7 @@ def validate(context):
                         f"Nama folder utama '{actual_root_name}' tidak sesuai tugas "
                         f"(seharusnya '{expected_root_name}')."
                     ),
+                    action_type="open_folder",
                 ))
 
     existing_entries_lower = {}
@@ -85,6 +92,7 @@ def validate(context):
             issues.append(Issue(
                 category="Folder Structure",
                 message=f"Folder wajib '{folder}' tidak ditemukan di '{object_folder}'.",
+                action_type="open_folder",
             ))
         elif actual_entry != folder:
             issues.append(Issue(
@@ -93,6 +101,7 @@ def validate(context):
                     f"Nama folder '{actual_entry}' tidak boleh huruf kecil, "
                     f"seharusnya '{folder}' (huruf besar semua)."
                 ),
+                action_type="open_folder",
             ))
 
     allowed_lower = {f.lower() for f in REQUIRED_FOLDERS}
@@ -105,6 +114,7 @@ def validate(context):
                     f"Folder '{entry}' tidak diizinkan di sini. "
                     f"Hanya boleh ada: {', '.join(REQUIRED_FOLDERS)}."
                 ),
+                action_type="open_folder",
             ))
 
     for folder in REQUIRED_FOLDERS:
@@ -125,6 +135,7 @@ def validate(context):
                         f"Folder '{inner_entry}' tidak boleh ada di dalam '{actual_entry}'. "
                         f"Folder ini hanya boleh berisi file, bukan folder lain."
                     ),
+                    action_type="open_folder",
                 ))
 
     return issues

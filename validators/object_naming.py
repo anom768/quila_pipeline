@@ -18,6 +18,7 @@ def validate(context):
                     f"'geo_part_name_(variantxx)'."
                 ),
                 target_name=obj.name,
+                action_type="select_object",
             ))
 
     return issues

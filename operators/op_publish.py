@@ -45,6 +45,7 @@ class QUILA_OT_publish(bpy.types.Operator):
             item.category = issue.category
             item.message = issue.message
             item.target_name = issue.target_name
+            item.action_type = issue.action_type
 
         props.is_valid = (len(issues) == 0)
         props.has_been_checked = True

@@ -56,6 +56,7 @@ def _check_internal_name_format(img, expected_basename_for_compare):
                 f"ekstensi file (.png/.jpg/dst). Rename tanpa ekstensi."
             ),
             target_name=img.name,
+            action_type="open_image_editor",
         ))
         return issues, internal_name, has_extension_issue
 
@@ -68,6 +69,7 @@ def _check_internal_name_format(img, expected_basename_for_compare):
                 f"Rename image di Blender agar sama dengan nama file."
             ),
             target_name=img.name,
+            action_type="open_image_editor",
         ))
 
     return issues, internal_name, has_extension_issue
@@ -95,6 +97,7 @@ def validate(context):
                         f"(path: '{abs_path}'). File mungkin sudah dipindah atau di-rename."
                     ),
                     target_name=img.name,
+                    action_type="open_texture_file",
                 ))
                 continue
 
@@ -110,6 +113,7 @@ def validate(context):
                             f"Pindahkan file ke folder TEXTURE yang benar."
                         ),
                         target_name=img.name,
+                        action_type="open_texture_file",
                     ))
 
             if not TEXTURE_NAME_PATTERN.match(file_basename):
@@ -120,6 +124,7 @@ def validate(context):
                         f"'tex_texture_name_type'."
                     ),
                     target_name=img.name,
+                    action_type="open_texture_file",
                 ))
 
             name_issues, _, _ = _check_internal_name_format(img, file_basename)
@@ -137,6 +142,7 @@ def validate(context):
                         f"tidak sesuai format 'tex_texture_name_type'."
                     ),
                     target_name=img.name,
+                    action_type="open_image_editor",
                 ))
 
     # Cek node Image Texture yang tidak punya image

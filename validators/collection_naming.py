@@ -17,6 +17,7 @@ def validate(context):
         issues.append(Issue(
             category="Collection Naming",
             message=f"Collection bernama '{expected_name}' (sesuai nama file) tidak ditemukan.",
+            action_type="highlight_collection",
         ))
 
     for col in all_collections:
@@ -28,6 +29,7 @@ def validate(context):
                 f"Collection '{col.name}' tidak sesuai SOP "
                 f"(harus '{expected_name}' atau '{LGT_CAM_COLLECTION_NAME}')."
             ),
+            action_type="highlight_collection",
             target_name=col.name,
         ))
 
@@ -46,6 +48,7 @@ def validate(context):
                     f"Pindahkan '{LGT_CAM_COLLECTION_NAME}' ke root scene, "
                     f"sejajar dengan '{expected_name}'."
                 ),
+                action_type="highlight_collection",
             ))
 
     for obj in bpy.data.objects:
@@ -64,6 +67,7 @@ def validate(context):
                     f"Object '{obj.name}' bertipe {obj.type} harus berada di collection "
                     f"'{LGT_CAM_COLLECTION_NAME}'."
                 ),
+                action_type="select_object",
                 target_name=obj.name,
             ))
 

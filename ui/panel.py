@@ -4,6 +4,18 @@ from .helpers import get_wrap_width_chars, draw_wrapped_text
 from ..csv_loader import get_current_assigned_object_name
 from ..sop_rules import get_file_mode
 
+def _get_action_icon(action_type):
+    """Return nama icon Blender sesuai action_type."""
+    icons = {
+        "select_object":      "OBJECT_DATA",
+        "highlight_collection": "OUTLINER_COLLECTION",
+        "open_folder":        "FILE_FOLDER",
+        "open_render_folder": "FILE_FOLDER",
+        "open_texture_file":  "IMAGE_DATA",
+        "open_image_editor":  "IMAGE",
+        "open_shader_editor": "MATERIAL",
+    }
+    return icons.get(action_type, "RIGHTARROW")
 
 class QUILA_PT_main_panel(bpy.types.Panel):
     """Panel utama Quila Pipeline di N-Panel viewport"""
@@ -66,6 +78,16 @@ class QUILA_PT_main_panel(bpy.types.Panel):
                 box = layout.box()
                 box.label(text=f"{category} ({len(items)})", icon="ERROR")
                 for item in items:
-                    row = box.row()
+                    row = box.row(align=True)
                     col = row.column()
+                    col.scale_x = 1.0
                     draw_wrapped_text(col, item.message, wrap_width, bullet=True)
+
+                    if item.action_type and item.target_name:
+                        btn = row.operator(
+                            "quila.select_target",
+                            text="",
+                            icon=_get_action_icon(item.action_type),
+                        )
+                        btn.target_name = item.target_name
+                        btn.action_type = item.action_type
