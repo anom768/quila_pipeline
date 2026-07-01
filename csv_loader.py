@@ -1,28 +1,37 @@
 import csv
 import os
-import bpy
 import re
+import bpy
 
 
-# Format nama file: csv_tugasX_(name_materi).csv
-# Contoh: csv_tugas1_kursi_taman.csv, csv_tugas2_meja_makan.csv
-TASK_CSV_PATTERN = re.compile(r"^csv_tugas(\d+)_(.+)\.csv$", re.IGNORECASE)
+# Format single: csv_tugasX_name.csv
+# Format group:  csv_tugasX_name_group.csv
+# Cek group DULU supaya tidak tertangkap pattern single
+_GROUP_PATTERN = re.compile(r"^csv_tugas(\d+)_(.+)_group\.csv$", re.IGNORECASE)
+_SINGLE_PATTERN = re.compile(r"^csv_tugas(\d+)_(.+)\.csv$", re.IGNORECASE)
+
 _tugas_enum_cache = []
+_artist_enum_cache = []
 
+
+# ================================================================ #
+# FOLDER CSV
+# ================================================================ #
 
 def get_csv_folder():
-    """Path folder csv/ yang berada di dalam folder addon ini sendiri."""
+    """Path folder csv/ di dalam folder addon ini sendiri."""
     addon_root = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(addon_root, "csv")
 
 
-def discover_task_csv_files():
-    """Cari semua file csv_tugasX_(name_materi).csv di folder csv/ milik addon.
-    Return list of tuple (nomor_tugas, label_materi, filepath), terurut dari nomor terkecil.
+# ================================================================ #
+# DISCOVER & LOAD
+# ================================================================ #
 
-    Contoh: csv_tugas1_kursi_taman.csv
-    → (1, 'Kursi Taman', '/path/csv_tugas1_kursi_taman.csv')
-    """
+def discover_task_csv_files():
+    """Cari semua file CSV tugas di folder csv/.
+    Return list of tuple: (nomor_tugas, materi_label, filepath, is_group)
+    Terurut berdasarkan nomor tugas terkecil."""
     folder = get_csv_folder()
 
     if not os.path.isdir(folder):
@@ -30,21 +39,27 @@ def discover_task_csv_files():
 
     found = []
     for filename in os.listdir(folder):
-        match = TASK_CSV_PATTERN.match(filename)
+        # Cek group dulu
+        match = _GROUP_PATTERN.match(filename)
         if match:
-            tugas_number = int(match.group(1))
-            # Ubah underscore jadi spasi, capitalize tiap kata untuk label dropdown
-            materi_raw = match.group(2)
-            materi_label = materi_raw.replace("_", " ").title()
-            found.append((tugas_number, materi_label, os.path.join(folder, filename)))
+            number = int(match.group(1))
+            label = match.group(2).replace("_", " ").title()
+            found.append((number, label, os.path.join(folder, filename), True))
+            continue
+
+        # Cek single
+        match = _SINGLE_PATTERN.match(filename)
+        if match:
+            number = int(match.group(1))
+            label = match.group(2).replace("_", " ").title()
+            found.append((number, label, os.path.join(folder, filename), False))
 
     found.sort(key=lambda item: item[0])
     return found
 
 
 def load_task_csv(filepath):
-    """Baca satu file CSV tugas tertentu.
-    Return list of dict {'artist': ..., 'object_name': ...}."""
+    """Baca satu file CSV. Return list of dict."""
     if not filepath or not os.path.isfile(filepath):
         return []
 
@@ -61,32 +76,93 @@ def load_task_csv(filepath):
     return rows
 
 
-def get_artist_names(filepath):
-    """Return daftar nama artist unik dari satu file CSV tugas, terurut alfabet."""
+def _get_file_info(tugas_ke):
+    """Helper: ambil (filepath, is_group) untuk tugas_ke yang dipilih.
+    Return (None, None) kalau tidak ketemu."""
+    files = {number: (fp, ig) for number, _, fp, ig in discover_task_csv_files()}
+    try:
+        return files.get(int(tugas_ke), (None, None))
+    except (ValueError, TypeError):
+        return None, None
+
+
+# ================================================================ #
+# ARTIST NAMES — Single
+# ================================================================ #
+
+def _get_artist_names_single(filepath):
+    """Return list nama artist unik dari CSV format single, terurut alfabet."""
     rows = load_task_csv(filepath)
-    names = sorted({
+    return sorted({
         row["artist"].strip()
         for row in rows
         if row.get("artist") and row["artist"].strip()
     })
-    return names
 
 
-def get_object_name_for_artist(filepath, artist_name):
-    """Cari object_name yang ditugaskan ke artist tertentu, di file CSV tugas ini.
-    Return string object_name, atau None kalau tidak ketemu."""
+# ================================================================ #
+# ARTIST PAIRS — Group
+# ================================================================ #
+
+def _get_artist_pairs(filepath):
+    """Return list tuple (identifier, label) dari CSV format group.
+    identifier = 'artist1|artist2', label = 'artist1 & artist2'."""
+    rows = load_task_csv(filepath)
+    pairs = []
+    seen = set()
+    for row in rows:
+        a1 = row.get("artist1", "").strip()
+        a2 = row.get("artist2", "").strip()
+        if a1 and a2:
+            key = f"{a1}|{a2}"
+            if key not in seen:
+                seen.add(key)
+                pairs.append((key, f"{a1} & {a2}"))
+    return pairs
+
+
+# ================================================================ #
+# OBJECT NAME — Single
+# ================================================================ #
+
+def _get_object_name_single(filepath, artist_name):
+    """Cari object_name untuk artist tertentu di CSV single."""
     rows = load_task_csv(filepath)
     for row in rows:
         if row.get("artist", "").strip() == artist_name:
-            object_name = row.get("object_name", "").strip()
-            if object_name:
-                return object_name
+            return row.get("object_name", "").strip() or None
     return None
 
 
+# ================================================================ #
+# OBJECT NAME — Group
+# ================================================================ #
+
+def _get_object_name_group(filepath, artist_identifier):
+    """Cari object_name untuk pasangan artist di CSV group.
+    artist_identifier format: 'artist1|artist2'."""
+    parts = artist_identifier.split("|")
+    if len(parts) != 2:
+        return None
+
+    a1, a2 = parts[0].strip(), parts[1].strip()
+    rows = load_task_csv(filepath)
+
+    for row in rows:
+        r_a1 = row.get("artist1", "").strip()
+        r_a2 = row.get("artist2", "").strip()
+        if r_a1 == a1 and r_a2 == a2:
+            return row.get("object_name", "").strip() or None
+    return None
+
+
+# ================================================================ #
+# ENUM ITEMS — Tugas
+# ================================================================ #
+
 def get_tugas_enum_items(self, context):
-    """Callback EnumProperty: daftar pilihan dropdown Tugas.
-    Label: 'Tugas X - Name Materi' (dari nama file csv_tugasX_(name_materi).csv)."""
+    """Callback EnumProperty dropdown Tugas.
+    Label: 'Tugas X - Name Materi' (+ ' [Group]' kalau format group)."""
     global _tugas_enum_cache
 
     files = discover_task_csv_files()
@@ -95,78 +171,88 @@ def get_tugas_enum_items(self, context):
         _tugas_enum_cache = [("NONE", "(Tidak ada file CSV tugas)", "")]
     else:
         _tugas_enum_cache = [("NONE", "-- Pilih Tugas --", "")] + [
-            (str(number), f"Tugas {number} - {materi_label}", "")
-            for number, materi_label, _ in files
+            (
+                str(number),
+                f"Tugas {number} - {label}" + (" [Group]" if is_group else ""),
+                ""
+            )
+            for number, label, _, is_group in files
         ]
 
     return _tugas_enum_cache
 
 
-_artist_enum_cache = []
-
+# ================================================================ #
+# ENUM ITEMS — Artist
+# ================================================================ #
 
 def get_artist_enum_items(self, context):
-    """Callback EnumProperty: daftar pilihan dropdown Artist,
-    tergantung dropdown Tugas (self.tugas_ke) yang sedang dipilih."""
+    """Callback EnumProperty dropdown Artist.
+    Format single: nama satu-satu.
+    Format group: nama pasangan 'Artist1 & Artist2'."""
     global _artist_enum_cache
 
-    # Ubah ke dict: {nomor: filepath}
-    files = {number: filepath for number, _, filepath in discover_task_csv_files()}
-
-    try:
-        selected_tugas = int(self.tugas_ke)
-    except (ValueError, TypeError):
-        selected_tugas = None
-
-    filepath = files.get(selected_tugas)
+    filepath, is_group = _get_file_info(self.tugas_ke)
 
     if not filepath:
         _artist_enum_cache = [("NONE", "(Pilih Tugas dulu)", "")]
         return _artist_enum_cache
 
-    names = get_artist_names(filepath)
-
-    if not names:
-        _artist_enum_cache = [("NONE", "(CSV kosong)", "")]
+    if is_group:
+        pairs = _get_artist_pairs(filepath)
+        if not pairs:
+            _artist_enum_cache = [("NONE", "(CSV group kosong)", "")]
+        else:
+            _artist_enum_cache = [("NONE", "-- Pilih Group --", "")] + [
+                (identifier, label, "") for identifier, label in pairs
+            ]
     else:
-        _artist_enum_cache = [("NONE", "-- Pilih Artist --", "")] + [
-            (name, name, "") for name in names
-        ]
+        names = _get_artist_names_single(filepath)
+        if not names:
+            _artist_enum_cache = [("NONE", "(CSV kosong)", "")]
+        else:
+            _artist_enum_cache = [("NONE", "-- Pilih Artist --", "")] + [
+                (name, name, "") for name in names
+            ]
 
     return _artist_enum_cache
 
 
+# ================================================================ #
+# GET SELECTED CSV PATH
+# ================================================================ #
+
 def get_selected_csv_path(context):
-    """Return filepath csv sesuai dropdown Tugas yang sedang dipilih di Scene."""
-    props = context.scene.quila_props
-    files = {number: filepath for number, _, filepath in discover_task_csv_files()}
+    """Return filepath CSV sesuai dropdown Tugas yang dipilih."""
+    filepath, _ = _get_file_info(context.scene.quila_props.tugas_ke)
+    return filepath
 
-    try:
-        selected_tugas = int(props.tugas_ke)
-    except (ValueError, TypeError):
-        return None
 
-    return files.get(selected_tugas)
-
+# ================================================================ #
+# GET ASSIGNED OBJECT NAME
+# ================================================================ #
 
 def get_current_assigned_object_name(context):
-    """Return object_name hasil kombinasi Tugas+Artist yang sedang dipilih.
-    None kalau salah satu belum dipilih atau tidak ketemu di CSV."""
+    """Return object_name hasil kombinasi Tugas+Artist yang dipilih.
+    Menangani format single maupun group secara otomatis."""
     props = context.scene.quila_props
 
-    if props.tugas_ke == "NONE":
+    if props.tugas_ke == "NONE" or props.artist_name == "NONE":
         return None
 
-    if props.artist_name == "NONE":
-        return None
-
-    filepath = get_selected_csv_path(context)
-
+    filepath, is_group = _get_file_info(props.tugas_ke)
     if not filepath:
         return None
 
-    return get_object_name_for_artist(filepath, props.artist_name)
+    if is_group:
+        return _get_object_name_group(filepath, props.artist_name)
+    else:
+        return _get_object_name_single(filepath, props.artist_name)
 
+
+# ================================================================ #
+# IS CSV READY
+# ================================================================ #
 
 def is_csv_ready(context):
     """Return True kalau ada minimal satu CSV tugas yang terbaca dan punya data.
@@ -175,9 +261,8 @@ def is_csv_ready(context):
     if not files:
         return False
 
-    for _, _, filepath in files:
-        rows = load_task_csv(filepath)
-        if rows:
+    for _, _, filepath, _ in files:
+        if load_task_csv(filepath):
             return True
 
     return False
