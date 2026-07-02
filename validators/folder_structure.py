@@ -2,7 +2,7 @@ import os
 import re
 import bpy
 from ..sop_rules import REQUIRED_FOLDERS, get_file_mode, get_expected_object_name
-from . import Issue
+from .issue import Issue
 
 
 def validate(context):
@@ -41,25 +41,29 @@ def validate(context):
         ))
         return issues
 
-    # Cek nama folder utama: harus UPPERCASE dari object_name, hanya huruf/angka/underscore
+    # ------------------------------------------------------------------ #
+    # Cek nama folder utama — harus UPPERCASE dari object_name
+    # ------------------------------------------------------------------ #
     expected_object_name = get_expected_object_name(filepath)
     actual_root_name = os.path.basename(object_folder)
 
     if expected_object_name:
         expected_root_name = expected_object_name.upper()
 
-        if not re.match(r'^[A-Z0-9_]+$', actual_root_name):
+        if actual_root_name == expected_object_name:
+            # Nama benar tapi huruf kecil (kasus paling umum)
             issues.append(Issue(
                 category="Folder Structure",
                 message=(
-                    f"Nama folder utama '{actual_root_name}' mengandung karakter tidak valid. "
-                    f"Hanya boleh huruf besar, angka, dan underscore (misal: '{expected_root_name}')."
+                    f"Nama folder utama '{actual_root_name}' harus UPPERCASE, "
+                    f"seharusnya '{expected_root_name}'."
                 ),
                 action_type="open_folder",
                 target_name=object_folder,
             ))
         elif actual_root_name != expected_root_name:
-            if actual_root_name == expected_object_name:
+            if actual_root_name.upper() == expected_root_name:
+                # Huruf campuran (misal "Kursi_Taman" bukan "KURSI_TAMAN")
                 issues.append(Issue(
                     category="Folder Structure",
                     message=(
@@ -69,7 +73,19 @@ def validate(context):
                     action_type="open_folder",
                     target_name=object_folder,
                 ))
+            elif not re.match(r'^[A-Z0-9_]+$', actual_root_name):
+                # Nama salah total, bukan versi uppercase dari object_name
+                issues.append(Issue(
+                    category="Folder Structure",
+                    message=(
+                        f"Nama folder utama '{actual_root_name}' tidak sesuai tugas "
+                        f"(seharusnya '{expected_root_name}')."
+                    ),
+                    action_type="open_folder",
+                    target_name=object_folder,
+                ))
             else:
+                # Sudah uppercase tapi nama object_name-nya berbeda
                 issues.append(Issue(
                     category="Folder Structure",
                     message=(
@@ -80,6 +96,9 @@ def validate(context):
                     target_name=object_folder,
                 ))
 
+    # ------------------------------------------------------------------ #
+    # Cek subfolder wajib (REF/WIP/RENDER/TEXTURE/EXPORT)
+    # ------------------------------------------------------------------ #
     existing_entries_lower = {}
     for entry in os.listdir(object_folder):
         existing_entries_lower.setdefault(entry.lower(), entry)
@@ -105,6 +124,9 @@ def validate(context):
                 target_name=object_folder,
             ))
 
+    # ------------------------------------------------------------------ #
+    # Cek folder ekstra di level atas
+    # ------------------------------------------------------------------ #
     allowed_lower = {f.lower() for f in REQUIRED_FOLDERS}
     for entry in os.listdir(object_folder):
         entry_path = os.path.join(object_folder, entry)
@@ -119,6 +141,9 @@ def validate(context):
                 target_name=object_folder,
             ))
 
+    # ------------------------------------------------------------------ #
+    # Cek folder ekstra di dalam subfolder wajib (satu level)
+    # ------------------------------------------------------------------ #
     for folder in REQUIRED_FOLDERS:
         actual_entry = existing_entries_lower.get(folder.lower())
         if actual_entry is None:

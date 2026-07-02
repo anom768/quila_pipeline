@@ -1,11 +1,10 @@
 import os
 import re
 import bpy
-from ..sop_rules import TEXTURE_NAME_PATTERN
-from . import Issue
+from ..sop_rules import TEXTURE_NAME_PATTERN, get_file_mode
+from .issue import Issue
 
 
-# Suffix duplikat Blender: .001, .002, dst
 _BLENDER_DUPLICATE_SUFFIX = re.compile(r"\.\d{3}$")
 
 _IMAGE_EXTENSIONS = {
@@ -20,33 +19,27 @@ def _has_image_extension(name):
 
 
 def _get_expected_texture_folder():
-    """Return path folder TEXTURE yang seharusnya untuk project ini,
-    berdasarkan lokasi file .blend yang sedang aktif.
-    Return None kalau filepath belum ada (file belum disimpan)."""
+    """Return path folder TEXTURE project ini berdasarkan lokasi file .blend aktif.
+    Return None kalau file belum disimpan."""
     filepath = bpy.data.filepath
     if not filepath:
         return None
 
-    from ..sop_rules import get_file_mode
     mode = get_file_mode(filepath)
     current_folder = os.path.dirname(filepath)
-
-    if mode == "wip":
-        object_folder = os.path.dirname(current_folder)
-    else:
-        object_folder = current_folder
-
+    object_folder = os.path.dirname(current_folder) if mode == "wip" else current_folder
     return os.path.normpath(os.path.join(object_folder, "TEXTURE"))
 
 
-def _check_internal_name_format(img, expected_basename_for_compare):
-    """Cek nama internal Blender (img.name): tidak boleh mengandung ekstensi,
-    lalu (kalau ada nama pembanding) cek kecocokan dengan nama file di disk.
+def _check_internal_name_format(img, expected_basename):
+    """Cek nama internal Blender (img.name):
+    1. Tidak boleh mengandung ekstensi file
+    2. Harus sama dengan nama file di disk (kalau expected_basename diisi)
 
-    Return (issues, internal_name, has_extension_issue)."""
+    Return (issues, cleaned_name, has_extension_issue)."""
     issues = []
-    internal_name = _BLENDER_DUPLICATE_SUFFIX.sub("", img.name)
-    has_extension_issue = _has_image_extension(internal_name)
+    cleaned_name = _BLENDER_DUPLICATE_SUFFIX.sub("", img.name)
+    has_extension_issue = _has_image_extension(cleaned_name)
 
     if has_extension_issue:
         issues.append(Issue(
@@ -58,26 +51,25 @@ def _check_internal_name_format(img, expected_basename_for_compare):
             target_name=img.name,
             action_type="open_image_editor",
         ))
-        return issues, internal_name, has_extension_issue
+        return issues, cleaned_name, has_extension_issue
 
-    if expected_basename_for_compare is not None and internal_name != expected_basename_for_compare:
+    if expected_basename is not None and cleaned_name != expected_basename:
         issues.append(Issue(
             category="Texture Naming",
             message=(
                 f"Nama internal texture di Blender ('{img.name}') tidak sama dengan "
-                f"nama file di disk ('{expected_basename_for_compare}'). "
+                f"nama file di disk ('{expected_basename}'). "
                 f"Rename image di Blender agar sama dengan nama file."
             ),
             target_name=img.name,
             action_type="open_image_editor",
         ))
 
-    return issues, internal_name, has_extension_issue
+    return issues, cleaned_name, has_extension_issue
 
 
 def validate(context):
     issues = []
-
     expected_texture_folder = _get_expected_texture_folder()
 
     for img in bpy.data.images:
@@ -93,15 +85,14 @@ def validate(context):
                 issues.append(Issue(
                     category="Texture Naming",
                     message=(
-                        f"File texture '{filename}' tidak ditemukan di disk "
-                        f"(path: '{abs_path}'). File mungkin sudah dipindah atau di-rename."
+                        f"File texture '{filename}' tidak ditemukan di disk. "
+                        f"File mungkin sudah dipindah atau di-rename."
                     ),
                     target_name=abs_path,
                     action_type="open_texture_file",
                 ))
                 continue
 
-            # Cek apakah file berasal dari folder TEXTURE project ini
             if expected_texture_folder is not None:
                 norm_abs = os.path.normpath(abs_path)
                 if not norm_abs.startswith(expected_texture_folder + os.sep):
@@ -109,8 +100,7 @@ def validate(context):
                         category="Texture Naming",
                         message=(
                             f"File texture '{filename}' tidak berada di folder TEXTURE "
-                            f"project ini ('{expected_texture_folder}'). "
-                            f"Pindahkan file ke folder TEXTURE yang benar."
+                            f"project ini. Pindahkan ke '{expected_texture_folder}'."
                         ),
                         target_name=abs_path,
                         action_type="open_texture_file",
@@ -131,10 +121,10 @@ def validate(context):
             issues.extend(name_issues)
 
         elif img.source == "GENERATED":
-            name_issues, internal_name, has_extension_issue = _check_internal_name_format(img, None)
+            name_issues, cleaned_name, has_extension_issue = _check_internal_name_format(img, None)
             issues.extend(name_issues)
 
-            if not has_extension_issue and not TEXTURE_NAME_PATTERN.match(internal_name):
+            if not has_extension_issue and not TEXTURE_NAME_PATTERN.match(cleaned_name):
                 issues.append(Issue(
                     category="Texture Naming",
                     message=(
@@ -157,6 +147,8 @@ def validate(context):
                         f"Node 'Image Texture' di material '{mat.name}' "
                         f"tidak ada image-nya. Assign image atau hapus node tersebut."
                     ),
+                    target_name=mat.name,
+                    action_type="open_material_properties",
                 ))
 
     return issues

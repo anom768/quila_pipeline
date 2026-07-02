@@ -12,10 +12,11 @@ Addon Blender untuk Quila Academy — alat bantu standarisasi naming convention,
 4. [Cara Pakai](#cara-pakai)
 5. [Struktur Folder Project yang Dihasilkan](#struktur-folder-project-yang-dihasilkan)
 6. [Daftar Validasi SOP](#daftar-validasi-sop)
-7. [Struktur Kode Addon](#struktur-kode-addon)
-8. [Keterbatasan yang Diketahui](#keterbatasan-yang-diketahui)
-9. [Troubleshooting](#troubleshooting)
-10. [Riwayat Pengembangan](#riwayat-pengembangan)
+7. [Tombol Select Target](#tombol-select-target)
+8. [Struktur Kode Addon](#struktur-kode-addon)
+9. [Keterbatasan yang Diketahui](#keterbatasan-yang-diketahui)
+10. [Troubleshooting](#troubleshooting)
+11. [Riwayat Pengembangan](#riwayat-pengembangan)
 
 ---
 
@@ -26,6 +27,8 @@ Quila Pipeline membantu mentor menjaga konsistensi pekerjaan 3D student tanpa ha
 - **Generate struktur folder otomatis** sesuai SOP, langsung dari kombinasi Tugas + Artist yang dipilih
 - **8 kategori validasi otomatis**: naming file, struktur folder, collection, object, mesh (n-gon/flipped normal), material, texture, dan render
 - **Satu tombol kerja** yang berubah sesuai konteks: *Create Project* → *Publish* → *Check SOP*
+- **Tombol Select Target** di setiap baris error — navigasi langsung ke object, folder, material, atau image yang bermasalah
+- **Dua format tugas**: single artist per object, atau group (2 artist per object)
 - **Sumber data terpusat**: daftar tugas (CSV) dan lokasi penyimpanan project (JSON) disimpan di dalam folder addon sendiri, otomatis terbaca tanpa setting manual berulang di tiap PC
 
 ---
@@ -46,9 +49,14 @@ Quila Pipeline membantu mentor menjaga konsistensi pekerjaan 3D student tanpa ha
 
 Addon ini **tidak akan berfungsi dengan benar** sampai dua file konfigurasi berikut disiapkan oleh mentor/admin:
 
-### 1. `csv/csv_tugasN.csv` — Daftar Tugas per Artist
+### 1. `csv/` — Daftar Tugas per Artist
 
-Buat satu file CSV per batch tugas, ditaruh di `quila_pipeline/csv/`, dengan nama **persis** `csv_tugas1.csv`, `csv_tugas2.csv`, dst (angka menyesuaikan jumlah tugas). Format isi:
+Buat satu file CSV per batch tugas, ditaruh di `quila_pipeline/csv/`. Ada **dua format** yang didukung:
+
+#### Format Single (satu artist per object)
+
+Nama file: `csv_tugasx_name.csv`
+Contoh: `csv_tugas1_kursi_taman.csv`
 
 ```
 artist,object_name
@@ -57,7 +65,22 @@ Budi,meja_taman
 Citra,rak_buku
 ```
 
-> Kolom wajib: `artist` dan `object_name`. Satu baris = satu artist dengan satu object_name untuk tugas itu.
+Dropdown Artist menampilkan nama satu-satu (`Andi`, `Budi`, dst).
+
+#### Format Group (dua artist per object)
+
+Nama file: `csv_tugasx_name_group.csv`
+Contoh: `csv_tugas2_lampu_meja_group.csv`
+
+```
+artist1,artist2,object_name
+Andi,Budi,lampu_meja
+Citra,Dedi,rak_buku
+```
+
+Dropdown Artist menampilkan pasangan (`Andi & Budi`, `Citra & Dedi`, dst).
+
+> Addon mendeteksi format secara otomatis dari nama file — `_group` di akhir nama file (sebelum `.csv`) menandakan format group. Dropdown Tugas menampilkan label `[Group]` untuk file format group.
 
 ### 2. `config/paths.json` — Lokasi Penyimpanan Project per Tugas
 
@@ -70,7 +93,7 @@ Buat file `quila_pipeline/config/paths.json`, isinya menentukan **di mana** stru
 }
 ```
 
-> Path dasar (misal `D:/Proyek/Tugas1`) **harus sudah ada** di disk sebelum dipakai — addon tidak akan membuat folder dasar ini sendiri, hanya folder project di dalamnya (sebagai pengaman dari typo path yang bisa membuat folder salah tempat).
+> Path dasar (misal `D:/Proyek/Tugas1`) **harus sudah ada** di disk sebelum dipakai — addon tidak akan membuat folder dasar ini sendiri, hanya folder project di dalamnya. Ini pengaman dari typo path yang bisa membuat folder terbuat di lokasi yang salah.
 
 ---
 
@@ -79,29 +102,29 @@ Buat file `quila_pipeline/config/paths.json`, isinya menentukan **di mana** stru
 ### A. Workflow Student (Mode WIP)
 
 1. Buka Blender baru (file belum pernah disimpan)
-2. Di N-Panel tab Quila, pilih **Tugas** lalu pilih **Artist** — kotak "Object" akan otomatis menampilkan nama object yang harus dikerjakan
+2. Di N-Panel tab Quila, pilih **Tugas** lalu pilih **Artist** (atau **Group** kalau format group) — kotak "Object" otomatis menampilkan nama object yang harus dikerjakan
 3. Klik **Create Project** — addon otomatis:
    - Membuat folder `[OBJECT_NAME]/` beserta subfolder `REF/WIP/RENDER/TEXTURE/EXPORT`
    - Menyimpan file Blender ini sebagai `[object_name]_wip01.blend` di folder `WIP/`
-4. Dropdown Tugas/Artist sekarang **terkunci** (tidak bisa diubah lagi), karena file sudah resmi terhubung ke project ini
-5. Lanjutkan modeling, texturing, dst seperti biasa
-6. Kapan saja, klik **Publish** untuk menjalankan seluruh validasi SOP:
-   - Kalau ada masalah → ditampilkan di Panel per kategori, tidak ada file dibuat
-   - Kalau semua lolos → file WIP otomatis ikut tersimpan (`save`), lalu dibuat **salinan file final** ke folder `[OBJECT_NAME]/` (file WIP yang sedang aktif tetap WIP, tidak ikut "berpindah")
-7. Ulangi langkah 5-6 setiap ada revisi — file final akan menimpa versi sebelumnya secara otomatis
+4. Dropdown Tugas/Artist sekarang **terkunci** — file sudah resmi terhubung ke project ini
+5. Lanjutkan modeling, texturing, dst. Tombol Publish **hanya aktif di Object Mode** (tidak bisa diklik saat Edit Mode)
+6. Klik **Publish** untuk menjalankan seluruh validasi SOP:
+   - Kalau ada masalah → ditampilkan di Panel per kategori dengan tombol Select Target di tiap baris error
+   - Kalau semua lolos → file WIP otomatis di-save, lalu dibuat **salinan file final** ke folder `[OBJECT_NAME]/` (file WIP yang aktif tetap WIP, tidak berpindah)
+7. Ulangi langkah 5-6 setiap ada revisi — file final menimpa versi sebelumnya secara otomatis
 
 ### B. Workflow Mentor (Mode Final)
 
 1. Buka file final (`[object_name].blend`, ada di root folder `[OBJECT_NAME]/`, bukan di dalam `WIP/`)
-2. Tombol di Panel otomatis berubah jadi **Check SOP** (bukan Publish) — dropdown Tugas/Artist juga otomatis terkunci
-3. Klik **Check SOP** — addon menjalankan validasi yang sama, tapi **tidak** membuat file apapun, murni untuk verifikasi ulang bahwa file final masih sesuai SOP
+2. Tombol di Panel otomatis berubah jadi **Check SOP** — dropdown Tugas/Artist juga otomatis terkunci
+3. Klik **Check SOP** — addon menjalankan validasi yang sama, tapi **tidak** membuat file apapun
 
 ---
 
 ## Struktur Folder Project yang Dihasilkan
 
 ```
-[OBJECT_NAME]/              (huruf besar semua, dari Create Project otomatis)
+[OBJECT_NAME]/              (huruf besar semua — UPPERCASE dari object_name)
 ├── REF/
 ├── WIP/
 │   └── object_name_wip01.blend, wip02.blend, dst
@@ -113,26 +136,43 @@ Buat file `quila_pipeline/config/paths.json`, isinya menentukan **di mana** stru
 └── object_name.blend        (file final, dibuat otomatis oleh Publish)
 ```
 
-> **Catatan penting:** nama folder root (`[OBJECT_NAME]`) sengaja dibuat **huruf besar semua** (uppercase dari object_name), sementara nama file, collection, dan object di dalamnya tetap **huruf kecil** sesuai konvensi SOP biasa. Ini perbedaan konvensi yang disengaja antara nama folder (uppercase) dan nama internal/file (lowercase) — bukan kesalahan.
+> Nama folder root (`[OBJECT_NAME]`) **huruf besar semua** (UPPERCASE dari object_name), sementara nama file, collection, dan object di dalamnya tetap **huruf kecil** sesuai SOP. Ini konvensi yang disengaja — bukan kesalahan.
 
 ---
 
 ## Daftar Validasi SOP
 
-Semua validasi berikut dijalankan setiap klik Publish/Check SOP, **semuanya bersifat blocking** (tidak ada yang sekadar warning):
+Semua validasi dijalankan setiap klik Publish/Check SOP. Semuanya bersifat **blocking** dan menampilkan **1 error pertama per kategori** per klik (student fokus membenarkan satu masalah dulu sebelum lanjut):
 
 | Kategori | Yang Divalidasi |
 |---|---|
-| **File Naming** | Format nama file (`object_name_(variant)_wipXX.blend` untuk WIP, `object_name_(variant).blend` untuk Final); `object_name` harus cocok dengan tugas yang dipilih di dropdown |
-| **Folder Structure** | Lokasi file WIP harus di folder `WIP/`; nama folder root harus uppercase dan cocok object_name; folder wajib (`REF/WIP/RENDER/TEXTURE/EXPORT`) harus ada dengan huruf besar semua; tidak boleh ada folder ekstra (di level manapun, termasuk nested di dalam folder wajib) |
-| **Collection Naming** | Collection utama harus sesuai nama file; tidak boleh ada collection lain selain itu dan `lgt&cam`; collection `lgt&cam` tidak boleh nested di dalam collection object; semua Light/Camera wajib berada di collection `lgt&cam` |
-| **Object Naming** | Semua object Mesh harus diawali `geo_` |
+| **File Naming** | Format nama file (`object_name_(variant)_wipXX.blend` untuk WIP, `object_name_(variant).blend` untuk Final); `object_name` harus cocok dengan tugas yang dipilih |
+| **Folder Structure** | File WIP harus di dalam folder `WIP/`; nama folder root harus UPPERCASE dan cocok `object_name`; folder wajib (`REF/WIP/RENDER/TEXTURE/EXPORT`) harus ada dengan huruf besar semua; tidak boleh ada folder ekstra di level manapun (termasuk nested di dalam folder wajib) |
+| **Collection Naming** | Collection utama harus sesuai nama file; tidak boleh ada collection lain selain itu dan `lgt&cam`; `lgt&cam` tidak boleh nested di dalam collection object; semua Light/Camera wajib di collection `lgt&cam` |
+| **Object Naming** | Semua object Mesh harus diawali `geo_`; harus berada di dalam collection yang sesuai |
 | **Mesh Rules** | Tidak boleh ada n-gon (face > 4 sisi); tidak boleh ada normal yang terbalik (flipped) |
 | **Material Naming** | Semua material harus diawali `shd_` |
-| **Texture Naming** | File texture harus ada di disk (tidak missing); harus berada di folder `TEXTURE/` project ini; format nama harus `tex_nama_tipe`; nama internal di Blender harus sama dengan nama file (tanpa ekstensi); Generated Image (bukan dari file) juga ikut divalidasi formatnya; node Image Texture tidak boleh kosong tanpa image |
-| **Render Naming** | File di folder `RENDER/` harus berformat `object_name_(variant)_prevXX`, dan harus diawali nama object yang sesuai |
+| **Texture Naming** | File texture tidak boleh missing; harus berada di folder `TEXTURE/` project ini; format nama harus `tex_nama_tipe`; nama internal di Blender harus sama dengan nama file (tanpa ekstensi, tanpa suffix duplikat `.001`); Generated Image juga divalidasi formatnya; node Image Texture tidak boleh kosong |
+| **Render Naming** | File di folder `RENDER/` harus berformat `object_name_(variant)_prevXX` dan diawali nama object yang sesuai |
 
-> **Catatan desain:** sejak versi terbaru, `run_all()` hanya mengambil **1 error pertama** dari tiap kategori validator (bukan menampilkan semua error sekaligus per kategori) — ini keputusan sengaja, supaya student fokus membenarkan satu masalah dulu sebelum lanjut ke masalah berikutnya, tidak overwhelmed. Tampilan ikon bullet (`•`) di Panel tetap ada untuk mengantisipasi kalau desain ini diubah lagi di masa depan jadi "tampilkan semua error".
+---
+
+## Tombol Select Target
+
+Setiap baris error di Panel punya tombol kecil di kanan (ikonnya berbeda per kategori). Klik tombol ini untuk navigasi langsung ke lokasi atau item yang bermasalah:
+
+| Kategori Error | Aksi Tombol | Ikon |
+|---|---|---|
+| Folder Structure | Buka File Explorer ke folder yang bermasalah | 📁 |
+| Collection Naming (collection) | Highlight collection di Outliner | 🗂 |
+| Collection Naming (Light/Camera) | Select object di viewport + fokus | 🔵 |
+| Object Naming | Select object di viewport + fokus | 🔵 |
+| Mesh Rules | Select object di viewport + fokus | 🔵 |
+| Material Naming | Buka Properties panel ke tab Material | 🟡 |
+| Texture (file disk) | Buka File Explorer, sorot file texture | 🖼 |
+| Texture (internal Blender) | Buka Image Editor, tampilkan image | 🖼 |
+| Texture (node kosong) | Buka Properties panel ke tab Material | 🟡 |
+| Render Naming | Buka File Explorer ke folder RENDER | 📁 |
 
 ---
 
@@ -140,15 +180,16 @@ Semua validasi berikut dijalankan setiap klik Publish/Check SOP, **semuanya bers
 
 ```
 quila_pipeline/
-├── __init__.py                 # bl_info, register/unregister
-├── properties.py                # PropertyGroup: tugas_ke, artist_name, hasil validasi
-├── sop_rules.py                  # Semua regex pattern SOP + deteksi mode WIP/Final
-├── csv_loader.py                 # Baca csv/csv_tugasN.csv, dropdown Tugas & Artist
-├── path_config.py                # Baca config/paths.json
-├── csv/                            # Data: daftar tugas per artist
-├── config/                         # Data: lokasi folder project per tugas
+├── __init__.py                    # bl_info, register/unregister
+├── properties.py                   # PropertyGroup: tugas_ke, artist_name, hasil validasi
+├── sop_rules.py                     # Regex pattern SOP + deteksi mode WIP/Final
+├── csv_loader.py                    # Baca CSV, dropdown Tugas & Artist (single & group)
+├── path_config.py                   # Baca config/paths.json
+├── csv/                               # Data: file CSV tugas (single & group)
+├── config/                            # Data: paths.json lokasi project per tugas
 ├── validators/
-│   ├── __init__.py                 # Issue (dataclass) + run_all()
+│   ├── __init__.py                    # run_all() — registry semua validator
+│   ├── issue.py                       # Dataclass Issue (category, message, target_name, action_type)
 │   ├── file_naming.py
 │   ├── folder_structure.py
 │   ├── collection_naming.py
@@ -158,31 +199,46 @@ quila_pipeline/
 │   ├── texture_naming.py
 │   └── render_naming.py
 ├── operators/
-│   ├── op_publish.py               # Tombol Publish / Check SOP
-│   └── op_create_project.py        # Tombol Create Project
+│   ├── op_publish.py                  # Tombol Publish / Check SOP
+│   ├── op_create_project.py           # Tombol Create Project
+│   └── op_select_target.py            # Tombol Select Target (navigasi per action_type)
 └── ui/
-    ├── helpers.py                   # Word-wrap manual untuk pesan panjang
-    └── panel.py                      # N-Panel utama
+    ├── helpers.py                      # Word-wrap manual untuk pesan panjang
+    └── panel.py                         # N-Panel utama
 ```
 
-### Fungsi Kunci yang Sering Dipakai Ulang
+### Fungsi Kunci
 
-| Fungsi | Lokasi | Fungsi |
+| Fungsi | Lokasi | Kegunaan |
 |---|---|---|
-| `get_file_mode(filepath)` | `sop_rules.py` | Deteksi `"wip"`/`"final"` dari pola nama file (`_wipXX` di akhir) |
+| `get_file_mode(filepath)` | `sop_rules.py` | Deteksi `"wip"`/`"final"` dari suffix `_wipXX` di nama file |
 | `get_expected_object_name(filepath)` | `sop_rules.py` | Ambil `object_name` (+variant) dari nama file, mode-aware |
-| `get_current_assigned_object_name(context)` | `csv_loader.py` | Object name hasil kombinasi dropdown Tugas+Artist saat ini |
-| `is_csv_ready(context)` | `csv_loader.py` | Cek minimal satu CSV tugas valid, dipakai untuk `poll()` |
+| `discover_task_csv_files()` | `csv_loader.py` | Scan folder `csv/`, return list file CSV + info format (di-cache 5 detik) |
+| `get_current_assigned_object_name(context)` | `csv_loader.py` | Object name dari kombinasi dropdown Tugas+Artist, menangani single & group |
+| `is_csv_ready(context)` | `csv_loader.py` | Cek minimal satu CSV valid, dipakai `poll()` untuk enable/disable tombol |
 | `get_base_path_for_tugas(tugas_ke)` | `path_config.py` | Path dasar folder project untuk Create Project |
+
+### `action_type` yang Didukung `op_select_target.py`
+
+| `action_type` | Aksi |
+|---|---|
+| `select_object` | Select object di viewport + fokus |
+| `highlight_collection` | Highlight collection di Outliner |
+| `open_folder` | Buka File Explorer ke folder |
+| `open_render_folder` | Buka File Explorer ke folder RENDER |
+| `open_texture_file` | Buka File Explorer, sorot file texture |
+| `open_image_editor` | Buka Image Editor, tampilkan image |
+| `open_material_properties` | Select object pemilik material + buka tab Material di Properties |
 
 ---
 
 ## Keterbatasan yang Diketahui
 
-- **Deteksi flipped normal** (`mesh_rules.py`) memakai heuristik *signed volume* — akurat untuk mesh solid/tertutup, kurang akurat untuk mesh terbuka (misal plane datar) atau mesh dengan beberapa bagian terpisah yang saling "membatalkan" dalam hitungan volume total. Pelengkap manual: aktifkan **Overlay > Face Orientation** di viewport untuk cross-check visual.
-- **Hanya 1 error per kategori ditampilkan per klik** (lihat catatan di bagian Daftar Validasi SOP) — kalau satu kategori punya banyak masalah, student akan melihatnya satu per satu setiap klik Publish/Check SOP, bukan semua sekaligus.
-- **Tombol "Select object"** (lompat ke object bermasalah di viewport) sudah dihapus dari versi ini — `target_name` di setiap `Issue` masih ada di struktur data, tapi tidak lagi dipakai untuk fitur apapun di Panel.
-- **Path di `config/paths.json` dan CSV di `csv/`** adalah data hidup yang dikelola mentor — kalau melakukan update kode addon di kemudian hari, jangan menimpa folder `csv/` dan `config/` secara tidak sengaja (lihat bagian Maintenance di dokumen revisi sebelumnya).
+- **Deteksi flipped normal** (`mesh_rules.py`) memakai heuristik *signed volume* — akurat untuk mesh solid/tertutup, kurang akurat untuk mesh terbuka (misal plane datar) atau mesh dengan beberapa bagian terpisah. Gunakan **Overlay > Face Orientation** di viewport sebagai cross-check visual.
+- **Hanya 1 error per kategori per klik** — kalau satu kategori punya banyak masalah, student melihatnya satu per satu setiap klik Publish/Check SOP.
+- **Image Editor (Select Target texture)** — kalau tidak ada area bertipe Image Editor yang terbuka, addon akan mengubah area yang ada menjadi Image Editor. Untuk hasil terbaik, pakai workspace **Shading** yang sudah punya Image Editor bawaan.
+- **CSV dan `config/paths.json`** adalah data hidup yang dikelola mentor — saat update kode addon, jangan menimpa folder `csv/` dan `config/` secara tidak sengaja.
+- **`discover_task_csv_files()` di-cache 5 detik** — perubahan nama/isi file CSV di folder `csv/` baru terdeteksi setelah 5 detik (refresh otomatis, tidak perlu restart Blender).
 
 ---
 
@@ -190,14 +246,19 @@ quila_pipeline/
 
 | Masalah | Kemungkinan Sebab |
 |---|---|
-| Dropdown Tugas/Artist kosong | File `csv/csv_tugasN.csv` belum ada/format salah — cek nama kolom persis `artist,object_name` |
-| Tombol Create Project/Publish abu-abu | Tugas dan/atau Artist belum dipilih (masih `"NONE"`), atau CSV tidak ada data sama sekali |
+| Dropdown Tugas kosong | Tidak ada file `csv_tugasx_name.csv` di folder `csv/` — cek nama file sesuai format |
+| Dropdown Artist kosong setelah pilih Tugas | Header CSV salah — pastikan `artist,object_name` (single) atau `artist1,artist2,object_name` (group) |
+| Label `[Group]` tidak muncul | Nama file harus diakhiri `_group.csv` persis, bukan `_groups.csv` atau `_Group.csv` |
+| Tombol Create Project/Publish abu-abu | Tugas dan/atau Artist belum dipilih, atau tidak ada CSV yang valid |
+| Tombol Publish abu-abu padahal sudah pilih Artist | Blender sedang di Edit Mode — keluar ke Object Mode dulu |
 | Create Project error "Path dasar tidak ditemukan" | Folder di `config/paths.json` belum dibuat manual di disk |
-| File WIP dianggap mode "Final" | Cek nama file masih ada suffix `_wipXX` sebelum `.blend` — deteksi mode berdasarkan pola nama file, bukan folder |
-| Folder utama dianggap salah nama padahal sudah benar | Pastikan ditulis **huruf besar semua**, persis sama dengan `object_name` (di-uppercase) |
-| Texture dianggap "tidak ditemukan" padahal ada | Pastikan file ada **di dalam** folder `TEXTURE/` milik project ini, bukan di lokasi lain |
+| File WIP dianggap mode "Final" | Cek suffix `_wipXX` di nama file sebelum `.blend` — deteksi mode dari pola nama file |
+| Folder root dianggap salah nama | Harus **UPPERCASE** persis dari `object_name` (misal `kursi_taman` → `KURSI_TAMAN`) |
+| Texture "tidak ditemukan" padahal ada | File harus berada **di dalam** folder `TEXTURE/` milik project ini |
+| Select Target material tidak berfungsi | Object pemilik material mungkin di-hide atau tidak ada di scene aktif |
 
 Untuk debugging lebih dalam, gunakan **Python Console** di workspace Scripting:
+
 ```python
 import bpy
 from quila_pipeline.validators import run_all
@@ -209,11 +270,24 @@ for issue in run_all(bpy.context):
 
 ## Riwayat Pengembangan
 
-Addon ini dibangun melalui 10 fase awal (skeleton, properties, CSV, validators, operator Check, Mark as Final, UI lengkap, testing, deployment, maintenance), lalu mengalami beberapa gelombang revisi besar:
+Addon ini dibangun melalui **10 fase awal** (Fase 0-10): skeleton addon, properties, CSV loader, 8 validator SOP, operator Check, operator Mark as Final, UI Panel, testing, deployment, dan maintenance.
 
-- **Revisi 1-6**: restrukturisasi CSV jadi file-per-tugas, UI dropdown Artist+Tugas, tombol Publish (gabungan Check+Mark as Final), mode ganda WIP/Final, bug fix dari testing awal, update dokumen deployment
-- **Revisi 7-11**: perbaikan deteksi mode WIP/Final agar berbasis nama file (bukan folder), pesan error yang lebih jelas, validasi folder ekstra, perbaikan texture naming, tombol dinamis + CSV guard
-- **Revisi 12-14**: gating tombol & lock dropdown di mode Final, validasi folder rekursif, perbaikan Generated Image & pesan ekstensi
-- **Revisi 15-17**: tombol Create Project + generate folder otomatis, validasi nama folder utama, ikon bullet untuk multiple error
+Kemudian mengalami beberapa gelombang **revisi**:
 
-Dokumentasi detail tiap fase/revisi tersedia di folder `docs/` dan `docs/revise/`.
+**Revisi 1-6** — Fondasi baru: CSV jadi file-per-tugas, UI dropdown Artist+Tugas, tombol Publish (gabungan Check+Mark as Final), mode ganda WIP/Final, bug fix testing awal, update dokumen deployment server.
+
+**Revisi 7-11** — Perbaikan deteksi mode WIP/Final (berbasis nama file, bukan folder), pesan error lebih jelas, validasi folder ekstra, perbaikan texture naming, tombol dinamis + CSV guard.
+
+**Revisi 12-14** — Gating tombol & lock dropdown di mode Final, validasi folder rekursif ke subfolder, perbaikan Generated Image & pesan error ekstensi.
+
+**Revisi 15-17** — Tombol Create Project + generate folder otomatis dari `paths.json`, validasi nama folder root harus UPPERCASE, ikon bullet untuk multiple error di Panel.
+
+**Revisi 18 (Revisi 25)** — Tambah field `action_type` ke dataclass `Issue` dan `QuilaIssueItem`, update semua validator untuk mengisi `action_type` yang sesuai.
+
+**Revisi 19 (Revisi 26)** — Operator `op_select_target.py` dengan 7 jenis aksi berbeda per `action_type`, tombol Select Target di tiap baris error di Panel.
+
+**Revisi 27** — Format CSV baru: `csv_tugasx_name_group.csv` untuk tugas berpasangan (2 artist per object), dropdown Artist menampilkan pasangan, `csv_loader.py` mendeteksi format otomatis.
+
+**Perbaikan bug & clean code terakhir** — Fix urutan logika deteksi folder UPPERCASE, fix mismatch `action_type` material, fix node Image Texture kosong tanpa `action_type`, `Issue` dipindah ke `validators/issue.py`, cache `discover_task_csv_files()` untuk performa UI.
+
+Dokumentasi detail tiap fase dan revisi tersedia di folder `docs/` dan `docs/revise/`.

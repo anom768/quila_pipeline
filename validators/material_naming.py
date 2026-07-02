@@ -1,6 +1,6 @@
 import bpy
 from ..sop_rules import MATERIAL_NAME_PATTERN
-from . import Issue
+from .issue import Issue
 
 
 def validate(context):

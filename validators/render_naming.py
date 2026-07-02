@@ -1,7 +1,7 @@
 import os
 import bpy
 from ..sop_rules import RENDER_NAME_PATTERN, get_file_mode, get_expected_object_name
-from . import Issue
+from .issue import Issue
 
 
 def validate(context):
@@ -13,12 +13,7 @@ def validate(context):
 
     mode = get_file_mode(filepath)
     current_folder = os.path.dirname(filepath)
-
-    if mode == "wip":
-        object_folder = os.path.dirname(current_folder)
-    else:
-        object_folder = current_folder
-
+    object_folder = os.path.dirname(current_folder) if mode == "wip" else current_folder
     render_folder = os.path.join(object_folder, "RENDER")
 
     if not os.path.isdir(render_folder):
@@ -41,7 +36,7 @@ def validate(context):
                     f"'[object_name]_(variantxx)_[prevxx]'."
                 ),
                 target_name=render_folder,
-                action_type="open_render_folder"
+                action_type="open_render_folder",
             ))
             continue
 
@@ -53,7 +48,7 @@ def validate(context):
                     f"yang aktif (seharusnya diawali '{expected_object_name}')."
                 ),
                 target_name=render_folder,
-                action_type="open_render_folder"
+                action_type="open_render_folder",
             ))
 
     return issues

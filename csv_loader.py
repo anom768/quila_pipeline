@@ -1,6 +1,7 @@
 import csv
 import os
 import re
+import time
 import bpy
 
 
@@ -12,6 +13,11 @@ _SINGLE_PATTERN = re.compile(r"^csv_tugas(\d+)_(.+)\.csv$", re.IGNORECASE)
 
 _tugas_enum_cache = []
 _artist_enum_cache = []
+
+# Cache discover_task_csv_files — hindari os.listdir berulang setiap frame UI
+_discover_cache = None
+_discover_cache_time = 0.0
+_DISCOVER_CACHE_TTL = 5.0  # detik
 
 
 # ================================================================ #
@@ -31,31 +37,39 @@ def get_csv_folder():
 def discover_task_csv_files():
     """Cari semua file CSV tugas di folder csv/.
     Return list of tuple: (nomor_tugas, materi_label, filepath, is_group)
-    Terurut berdasarkan nomor tugas terkecil."""
+    Terurut berdasarkan nomor tugas terkecil.
+
+    Hasil di-cache selama 5 detik untuk menghindari os.listdir() berlebihan
+    saat UI Blender digambar ulang setiap frame."""
+    global _discover_cache, _discover_cache_time
+
+    now = time.monotonic()
+    if _discover_cache is not None and (now - _discover_cache_time) < _DISCOVER_CACHE_TTL:
+        return _discover_cache
+
     folder = get_csv_folder()
-
-    if not os.path.isdir(folder):
-        return []
-
     found = []
-    for filename in os.listdir(folder):
-        # Cek group dulu
-        match = _GROUP_PATTERN.match(filename)
-        if match:
-            number = int(match.group(1))
-            label = match.group(2).replace("_", " ").title()
-            found.append((number, label, os.path.join(folder, filename), True))
-            continue
 
-        # Cek single
-        match = _SINGLE_PATTERN.match(filename)
-        if match:
-            number = int(match.group(1))
-            label = match.group(2).replace("_", " ").title()
-            found.append((number, label, os.path.join(folder, filename), False))
+    if os.path.isdir(folder):
+        for filename in os.listdir(folder):
+            match = _GROUP_PATTERN.match(filename)
+            if match:
+                number = int(match.group(1))
+                label = match.group(2).replace("_", " ").title()
+                found.append((number, label, os.path.join(folder, filename), True))
+                continue
 
-    found.sort(key=lambda item: item[0])
-    return found
+            match = _SINGLE_PATTERN.match(filename)
+            if match:
+                number = int(match.group(1))
+                label = match.group(2).replace("_", " ").title()
+                found.append((number, label, os.path.join(folder, filename), False))
+
+        found.sort(key=lambda item: item[0])
+
+    _discover_cache = found
+    _discover_cache_time = now
+    return _discover_cache
 
 
 def load_task_csv(filepath):
@@ -106,7 +120,7 @@ def _get_artist_names_single(filepath):
 
 def _get_artist_pairs(filepath):
     """Return list tuple (identifier, label) dari CSV format group.
-    identifier = 'artist1|artist2', label = 'artist1 & artist2'."""
+    identifier = 'artist1|artist2', label = 'Artist1 & Artist2'."""
     rows = load_task_csv(filepath)
     pairs = []
     seen = set()
@@ -149,9 +163,7 @@ def _get_object_name_group(filepath, artist_identifier):
     rows = load_task_csv(filepath)
 
     for row in rows:
-        r_a1 = row.get("artist1", "").strip()
-        r_a2 = row.get("artist2", "").strip()
-        if r_a1 == a1 and r_a2 == a2:
+        if row.get("artist1", "").strip() == a1 and row.get("artist2", "").strip() == a2:
             return row.get("object_name", "").strip() or None
     return None
 
@@ -174,7 +186,7 @@ def get_tugas_enum_items(self, context):
             (
                 str(number),
                 f"Tugas {number} - {label}" + (" [Group]" if is_group else ""),
-                ""
+                "",
             )
             for number, label, _, is_group in files
         ]
@@ -246,8 +258,7 @@ def get_current_assigned_object_name(context):
 
     if is_group:
         return _get_object_name_group(filepath, props.artist_name)
-    else:
-        return _get_object_name_single(filepath, props.artist_name)
+    return _get_object_name_single(filepath, props.artist_name)
 
 
 # ================================================================ #

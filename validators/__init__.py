@@ -1,13 +1,4 @@
-from dataclasses import dataclass
-
-
-@dataclass
-class Issue:
-    category: str
-    message: str
-    target_name: str = ""
-    action_type: str = ""
-
+from .issue import Issue
 
 from . import file_naming
 from . import folder_structure
@@ -27,7 +18,7 @@ VALIDATORS = (
     mesh_rules,
     material_naming,
     texture_naming,
-    render_naming
+    render_naming,
 )
 
 

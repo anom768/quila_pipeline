@@ -1,6 +1,6 @@
 import bpy
 from ..sop_rules import get_expected_object_name, LGT_CAM_COLLECTION_NAME
-from . import Issue
+from .issue import Issue
 
 
 def validate(context):
@@ -11,13 +11,12 @@ def validate(context):
         return issues
 
     all_collections = bpy.data.collections
-
     collection_names = [c.name for c in all_collections]
+
     if expected_name not in collection_names:
         issues.append(Issue(
             category="Collection Naming",
             message=f"Collection bernama '{expected_name}' (sesuai nama file) tidak ditemukan.",
-            action_type="highlight_collection",
         ))
 
     for col in all_collections:
@@ -34,9 +33,8 @@ def validate(context):
         ))
 
     lgt_cam_collection = bpy.data.collections.get(LGT_CAM_COLLECTION_NAME)
-
-    # Cek posisi hierarki lgt&cam — tidak boleh nested di dalam collection object
     object_collection = bpy.data.collections.get(expected_name)
+
     if object_collection and lgt_cam_collection is not None:
         child_names = [c.name for c in object_collection.children]
         if LGT_CAM_COLLECTION_NAME in child_names:
@@ -48,7 +46,6 @@ def validate(context):
                     f"Pindahkan '{LGT_CAM_COLLECTION_NAME}' ke root scene, "
                     f"sejajar dengan '{expected_name}'."
                 ),
-                action_type="highlight_collection",
             ))
 
     for obj in bpy.data.objects:

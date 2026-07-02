@@ -2,7 +2,7 @@ import os
 import bpy
 from ..sop_rules import get_file_mode, parse_filename_by_mode
 from ..csv_loader import get_current_assigned_object_name
-from . import Issue
+from .issue import Issue
 
 
 def validate(context):

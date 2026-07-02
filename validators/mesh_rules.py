@@ -1,6 +1,6 @@
 import bmesh
 import bpy
-from . import Issue
+from .issue import Issue
 
 
 def _has_ngon(bm):
@@ -9,9 +9,7 @@ def _has_ngon(bm):
 
 def _signed_volume(bm):
     """Hitung signed volume mesh untuk deteksi flipped normals.
-    Mesh tertutup (manifold) dengan normal yang benar (mengarah keluar)
-    akan menghasilkan volume positif. Volume negatif mengindikasikan
-    kemungkinan normal yang terbalik."""
+    Akurat untuk mesh solid/tertutup. Kurang akurat untuk mesh terbuka."""
     volume = 0.0
     for face in bm.faces:
         verts = face.verts

@@ -1,18 +1,16 @@
 import bpy
 from ..sop_rules import OBJECT_NAME_PATTERN, get_expected_object_name
-from . import Issue
+from .issue import Issue
 
 
 def validate(context):
     issues = []
-
     expected_collection = get_expected_object_name(bpy.data.filepath)
 
     for obj in bpy.data.objects:
         if obj.type != "MESH":
             continue
 
-        # Cek format nama
         if not OBJECT_NAME_PATTERN.match(obj.name):
             issues.append(Issue(
                 category="Object Naming",
@@ -24,7 +22,6 @@ def validate(context):
                 action_type="select_object",
             ))
 
-        # Cek apakah mesh berada di dalam collection object yang benar
         if expected_collection:
             col_names = [c.name for c in obj.users_collection]
             if expected_collection not in col_names:
